@@ -1,15 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '../../services/mockDb';
-import { User, HRRequest, ProvinceResponse, SectorTask } from '../../types';
+import { User, HRRequest, ProvinceResponse, DepartmentTask } from '../../types';
 import { FileText, Send, Paperclip, CheckCircle, Search, AlertCircle, Lock, Unlock } from 'lucide-react';
 
 interface Props {
     user: User;
     onNavigate?: (path: string) => void;
+    nextPath?: string;
 }
 
-const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
+const ResponseCompilation: React.FC<Props> = ({ 
+    user, 
+    onNavigate,
+    nextPath = '/province-history'
+}) => {
     // Mode: 'search' | 'compile'
     const [mode, setMode] = useState<'search' | 'compile'>('search');
     
@@ -19,7 +24,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
     
     // Selection State
     const [selectedReq, setSelectedReq] = useState<HRRequest | null>(null);
-    const [tasks, setTasks] = useState<SectorTask[]>([]);
+    const [tasks, setTasks] = useState<DepartmentTask[]>([]);
     
     // Compilation Form State
     const [finalContent, setFinalContent] = useState('');
@@ -39,7 +44,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
         if (req) {
             setSelectedReq(req);
             // Load tasks
-            const t = db.getSectorTasks(req.id, user.province!);
+            const t = db.getDepartmentTasks(req.id, user.province!);
             setTasks(t);
         } else {
             setSelectedReq(null);
@@ -50,7 +55,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
     const handleStartCompilation = () => {
         if (!selectedReq) return;
         // Pre-fill content
-        const summary = tasks.map(t => `[${t.sectorName} Report]:\n${t.responseData}`).join('\n\n');
+        const summary = tasks.map(t => `[${t.departmentName} Report]:\n${t.responseData}`).join('\n\n');
         setFinalContent(summary);
         setMode('compile');
     };
@@ -70,27 +75,29 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
             content: finalContent
         };
         db.addResponse(newResponse);
-        alert('Consolidated response submitted to Federal Ministry successfully!');
+        alert(user.province === 'Federal' 
+            ? 'Consolidated Federal Department response saved internally.' 
+            : 'Consolidated response submitted to Federal Ministry successfully!');
         
         // Reset and Navigate
         setMode('search');
         setSelectedReq(null);
         setSearchId('');
-        if (onNavigate) onNavigate('/province-history');
+        if (onNavigate) onNavigate(nextPath);
     };
 
     // Derived Stats
-    const totalSectors = tasks.length;
+    const totalDepartments = tasks.length;
     const submittedCount = tasks.filter(t => t.status === 'submitted').length;
-    const pendingCount = totalSectors - submittedCount;
-    const isReady = totalSectors > 0 && pendingCount === 0;
+    const pendingCount = totalDepartments - submittedCount;
+    const isReady = totalDepartments > 0 && pendingCount === 0;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
                 <div>
                     <h2 className="text-2xl font-bold text-[#01411C]">Response Compilation</h2>
-                    <p className="text-gray-500 text-sm">Consolidate sector data and submit final report to Federal.</p>
+                    <p className="text-gray-500 text-sm">Consolidate department data and {user.province === 'Federal' ? 'generate final federal report.' : 'submit final report to Federal.'}</p>
                 </div>
             </div>
 
@@ -128,15 +135,15 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
                                 </div>
                                 <div className="text-right">
                                     <span className="text-xs text-blue-600 uppercase font-bold tracking-wide">Status</span>
-                                    <div className="font-medium text-blue-800">{isReady ? 'Ready for Compilation' : 'Pending Sectors'}</div>
+                                    <div className="font-medium text-blue-800">{isReady ? 'Ready for Compilation' : 'Pending Departments'}</div>
                                 </div>
                             </div>
 
                             {/* Stats Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-                                    <div className="text-gray-500 text-sm font-medium">Total Sectors</div>
-                                    <div className="text-3xl font-bold text-gray-800 mt-1">{totalSectors}</div>
+                                    <div className="text-gray-500 text-sm font-medium">Total Departments</div>
+                                    <div className="text-3xl font-bold text-gray-800 mt-1">{totalDepartments}</div>
                                 </div>
                                 <div className="bg-white p-5 rounded-xl shadow-sm border border-green-100 bg-green-50/50">
                                     <div className="text-green-600 text-sm font-medium">Delivered Data</div>
@@ -148,14 +155,14 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
                                 </div>
                             </div>
 
-                            {/* Sector List */}
+                            {/* Department List */}
                             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                <div className="p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">Sector Status Details</div>
+                                <div className="p-4 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">Department Status Details</div>
                                 <table className="w-full text-left">
                                     <tbody>
                                         {tasks.length > 0 ? tasks.map(t => (
                                             <tr key={t.taskId} className="border-b border-gray-100 last:border-0">
-                                                <td className="p-4">{t.sectorName}</td>
+                                                <td className="p-4">{t.departmentName}</td>
                                                 <td className="p-4 text-right">
                                                     {t.status === 'submitted' ? (
                                                         <span className="inline-flex items-center gap-1 text-green-600 text-sm font-medium">
@@ -169,7 +176,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
                                                 </td>
                                             </tr>
                                         )) : (
-                                            <tr><td className="p-6 text-center text-gray-500">No sectors assigned yet.</td></tr>
+                                            <tr><td className="p-6 text-center text-gray-500">No departments assigned yet.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -183,7 +190,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
                                     className={`btn flex items-center gap-2 ${isReady ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                                 >
                                     {isReady ? <Unlock size={18} /> : <Lock size={18} />}
-                                    {isReady ? 'Proceed to Compilation' : 'Waiting for All Sectors'}
+                                    {isReady ? 'Proceed to Compilation' : 'Waiting for All Departments'}
                                 </button>
                             </div>
                         </div>
@@ -211,7 +218,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
                                 className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:border-[#01411C] min-h-[300px] font-mono text-sm leading-relaxed"
                             ></textarea>
                             <p className="text-xs text-gray-500 mt-2">
-                                * This content has been auto-populated from submitted sector reports. Please review and edit before final submission.
+                                * This content has been auto-populated from submitted department reports. Please review and edit before final submission.
                             </p>
                         </div>
 
@@ -225,7 +232,7 @@ const ResponseCompilation: React.FC<Props> = ({ user, onNavigate }) => {
 
                         <div className="flex justify-end pt-4 border-t border-gray-100">
                             <button onClick={handleFinalSubmit} className="btn btn-primary">
-                                <Send size={18} /> Submit Final Response to Federal
+                                <Send size={18} /> {user.province === 'Federal' ? 'Save Internal Record' : 'Submit Final Response to Federal'}
                             </button>
                         </div>
                     </div>

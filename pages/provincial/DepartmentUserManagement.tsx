@@ -9,7 +9,7 @@ interface Props {
     user: User;
 }
 
-const SectorUserManagement: React.FC<Props> = ({ user }) => {
+const DepartmentUserManagement: React.FC<Props> = ({ user }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     
@@ -18,7 +18,7 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
     const [newUsername, setNewUsername] = useState('');
     const [newEmail, setNewEmail] = useState('');
     const [newContact, setNewContact] = useState('');
-    const [selectedSectorId, setSelectedSectorId] = useState(DEPARTMENTS[0].id);
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState(DEPARTMENTS[0].id);
 
     useEffect(() => {
         refreshUsers();
@@ -32,8 +32,8 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
-        const sector = DEPARTMENTS.find(s => s.id === selectedSectorId);
-        if (!sector) return;
+        const dept = DEPARTMENTS.find(s => s.id === selectedDepartmentId);
+        if (!dept) return;
 
         const newUser: User = {
             id: `USR-${Math.floor(Math.random() * 10000)}`,
@@ -41,8 +41,8 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
             name: newName,
             role: UserRole.DEPARTMENT_ADMIN,
             province: user.province,
-            departmentId: sector.id,
-            departmentName: sector.name,
+            departmentId: dept.id,
+            departmentName: dept.name,
             email: newEmail,
             contactNumber: newContact
         };
@@ -68,7 +68,7 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-[#01411C] flex items-center gap-2">
-                        <Users /> Sector User Management
+                        <Users /> Department User Management
                     </h2>
                     <p className="text-gray-500 text-sm">Create and manage access for department focal persons.</p>
                 </div>
@@ -132,8 +132,8 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
                             <div className="form-field md:col-span-2">
                                 <label className="text-sm font-medium text-gray-700">Department / Sector</label>
                                 <select 
-                                    value={selectedSectorId}
-                                    onChange={e => setSelectedSectorId(e.target.value)}
+                                    value={selectedDepartmentId}
+                                    onChange={e => setSelectedDepartmentId(e.target.value)}
                                     className="p-2 border rounded-md w-full"
                                 >
                                     {DEPARTMENTS.map(s => (
@@ -156,7 +156,7 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
                         <tr>
                             <th className="p-4 text-sm font-semibold text-gray-600">Name & Contact</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Username</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Sector</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600">Department</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Role</th>
                             <th className="p-4 text-sm font-semibold text-gray-600 text-right">Actions</th>
                         </tr>
@@ -178,7 +178,7 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
                                     </span>
                                 </td>
                                 <td className="p-4 text-gray-500 text-sm flex items-center gap-1">
-                                    <Shield size={12} /> Sector Admin
+                                    <Shield size={12} /> Department Admin
                                 </td>
                                 <td className="p-4 text-right">
                                     <button 
@@ -205,4 +205,4 @@ const SectorUserManagement: React.FC<Props> = ({ user }) => {
     );
 };
 
-export default SectorUserManagement;
+export default DepartmentUserManagement;

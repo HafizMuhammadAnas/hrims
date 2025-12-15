@@ -6,18 +6,18 @@ import Dashboard from './pages/Dashboard';
 import Requests from './pages/Requests';
 import Analysis from './pages/Analysis';
 import { ReviewResponses, CompilationCenter, CompiledRecords } from './pages/FederalActions';
+import UserManagement from './pages/UserManagement'; // New Unified Page
 import ReceivedRequests from './pages/provincial/ReceivedRequests';
 import RequestDistribution from './pages/provincial/RequestDistribution';
-import SectorMonitoring from './pages/provincial/SectorMonitoring';
+import DepartmentMonitoring from './pages/provincial/DepartmentMonitoring';
 import ResponseCompilation from './pages/provincial/ResponseCompilation';
 import SubmissionHistory from './pages/provincial/SubmissionHistory';
-import SectorUserManagement from './pages/provincial/SectorUserManagement';
-import SectorTasks from './pages/sector/SectorTasks';
-import SectorHistory from './pages/sector/SectorHistory';
+import DepartmentTasks from './pages/department/DepartmentTasks';
+import DepartmentHistory from './pages/department/DepartmentHistory';
 import { ConventionsInfo, IndicatorsInfo, SDGsInfo, UPRInfo } from './pages/Reports';
 import ReportGenerator from './pages/ReportGenerator';
 import Profile from './pages/Profile';
-import { User } from './types';
+import { User, UserRole } from './types';
 
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -52,6 +52,35 @@ const App: React.FC = () => {
                 return <CompilationCenter />;
             case '/compiled-records':
                 return <CompiledRecords />;
+            case '/federal-users-mgmt':
+                return <UserManagement user={user} />;
+            
+            // Federal Department Action Routes (Reusing Provincial Components with 'Federal' scope)
+            case '/federal-received':
+                return <ReceivedRequests 
+                    user={{...user, province: 'Federal'}} 
+                    onNavigate={setCurrentPath} 
+                    routes={{distribution: '/federal-distribution', monitoring: '/federal-monitoring', history: '/federal-history'}}
+                />;
+            case '/federal-distribution':
+                return <RequestDistribution 
+                    user={{...user, province: 'Federal'}} 
+                    onNavigate={setCurrentPath} 
+                    nextPath="/federal-monitoring"
+                />;
+            case '/federal-monitoring':
+                return <DepartmentMonitoring user={{...user, province: 'Federal'}} onNavigate={setCurrentPath} />;
+            case '/federal-compilation':
+                return <ResponseCompilation 
+                    user={{...user, province: 'Federal'}} 
+                    onNavigate={setCurrentPath} 
+                    nextPath="/federal-history"
+                />;
+            case '/federal-users':
+                 // This is likely redundant for Federal Admin as they have federal-users-mgmt, but keeping for path safety
+                return <UserManagement user={{...user, province: 'Federal'}} />;
+            case '/federal-history':
+                return <SubmissionHistory user={{...user, province: 'Federal'}} />;
             
             // Provincial Routes
             case '/province-received':
@@ -59,19 +88,19 @@ const App: React.FC = () => {
             case '/province-distribution':
                 return <RequestDistribution user={user} onNavigate={setCurrentPath} />;
             case '/province-monitoring':
-                return <SectorMonitoring user={user} onNavigate={setCurrentPath} />;
+                return <DepartmentMonitoring user={user} onNavigate={setCurrentPath} />;
             case '/province-compilation':
                 return <ResponseCompilation user={user} onNavigate={setCurrentPath} />;
             case '/province-history':
                 return <SubmissionHistory user={user} />;
-            case '/province-users':
-                return <SectorUserManagement user={user} />;
+            case '/provincial-users-mgmt':
+                return <UserManagement user={user} />;
 
-            // Sector Routes
-            case '/sector-tasks':
-                return <SectorTasks user={user} />;
-            case '/sector-history':
-                return <SectorHistory user={user} />;
+            // Department Routes
+            case '/department-tasks':
+                return <DepartmentTasks user={user} />;
+            case '/department-history':
+                return <DepartmentHistory user={user} />;
 
             // Shared Reports
             case '/conventions':

@@ -1,62 +1,29 @@
 
-import React, { useState, useEffect } from 'react';
-import { User, UserRole } from '../types';
-import { SECTORS } from '../constants';
+import React, { useState } from 'react';
+import { User } from '../types';
 import { db } from '../services/mockDb';
+import { Lock, User as UserIcon } from 'lucide-react';
 
 interface LoginProps {
     onLogin: (user: User) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-    const [role, setRole] = useState<UserRole>(UserRole.FEDERAL_ADMIN);
-    const [province, setProvince] = useState<string>('Punjab');
-    const [sectorId, setSectorId] = useState<string>('SEC-HEALTH');
     const [username, setUsername] = useState('');
-    
-    // For Department Login, try to find existing users from DB to simulate login
-    const [availableSectorUsers, setAvailableSectorUsers] = useState<User[]>([]);
-
-    useEffect(() => {
-        if (role === UserRole.SECTOR_ADMIN) {
-            const users = db.getSectorUsers(province);
-            setAvailableSectorUsers(users);
-        }
-    }, [role, province]);
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        let user: User;
-        
-        if (role === UserRole.FEDERAL_ADMIN) {
-            user = {
-                username: username || 'admin',
-                role: role,
-                name: 'Federal Administrator',
-                province: undefined
-            };
-        } else if (role === UserRole.PROVINCIAL_ADMIN) {
-            user = {
-                username: username || 'prov_admin',
-                role: role,
-                name: `${province} Focal Person`,
-                province: province
-            };
+        setError('');
+
+        const user = db.authenticate(username);
+
+        if (user && password === 'password') { // Hardcoded password for demo
+            onLogin(user);
         } else {
-            // SECTOR_ADMIN
-            const selectedSector = SECTORS.find(s => s.id === sectorId);
-            user = {
-                username: username || 'sec_user',
-                role: role,
-                name: `${selectedSector?.name} User`,
-                province: province,
-                sectorId: sectorId,
-                sectorName: selectedSector?.name
-            };
+            setError('Invalid username or password.');
         }
-        
-        onLogin(user);
     };
 
     return (
@@ -68,78 +35,51 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <p className="urdu" style={{marginBottom: '30px'}}>اسلامی جمہوریہ پاکستان</p>
 
                 <form onSubmit={handleLogin} style={{textAlign: 'left'}}>
-                    <div className="form-field" style={{marginBottom: '15px'}}>
-                        <label>Login As</label>
-                        <select 
-                            value={role}
-                            onChange={(e) => setRole(e.target.value as UserRole)}
-                        >
-                            <option value={UserRole.FEDERAL_ADMIN}>Federal Authority (MOHR)</option>
-                            <option value={UserRole.PROVINCIAL_ADMIN}>Provincial Department</option>
-                            <option value={UserRole.SECTOR_ADMIN}>Sector / Department User</option>
-                        </select>
-                    </div>
-
-                    {(role === UserRole.PROVINCIAL_ADMIN || role === UserRole.SECTOR_ADMIN) && (
-                         <div className="form-field" style={{marginBottom: '15px'}}>
-                            <label>Select Province</label>
-                            <select 
-                                value={province}
-                                onChange={(e) => setProvince(e.target.value)}
-                            >
-                                <option value="Punjab">Punjab</option>
-                                <option value="Sindh">Sindh</option>
-                                <option value="KPK">KPK</option>
-                                <option value="Balochistan">Balochistan</option>
-                                <option value="Islamabad">Islamabad</option>
-                                <option value="GB">GB</option>
-                                <option value="AJK">AJK</option>
-                            </select>
-                        </div>
-                    )}
-
-                    {role === UserRole.SECTOR_ADMIN && (
-                         <div className="form-field" style={{marginBottom: '15px'}}>
-                            <label>Select Sector / Department</label>
-                            <select 
-                                value={sectorId}
-                                onChange={(e) => setSectorId(e.target.value)}
-                            >
-                                {SECTORS.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
-                            <div className="text-xs text-gray-500 mt-1">
-                                {availableSectorUsers.length > 0 ? 
-                                    `${availableSectorUsers.length} active users found for ${province}` : 
-                                    "System will auto-generate session for demo"
-                                }
-                            </div>
+                    {error && (
+                        <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4 text-center">
+                            {error}
                         </div>
                     )}
 
                     <div className="form-field" style={{marginBottom: '15px'}}>
                         <label>Username</label>
-                        <input 
-                            type="text" 
-                            placeholder="Enter username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input 
+                                type="text" 
+                                placeholder="e.g. federal or punjab admin"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="pl-10 w-full"
+                                required
+                            />
+                            <UserIcon size={18} className="absolute left-3 top-3 text-gray-400" />
+                        </div>
                     </div>
                     <div className="form-field" style={{marginBottom: '20px'}}>
                         <label>Password</label>
-                        <input 
-                            type="password" 
-                            placeholder="Enter password"
-                            defaultValue="password"
-                        />
+                        <div className="relative">
+                            <input 
+                                type="password" 
+                                placeholder="default: password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="pl-10 w-full"
+                                required
+                            />
+                            <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
+                        </div>
                     </div>
 
                     <button type="submit" className="btn btn-primary" style={{width: '100%', justifyContent: 'center'}}>
                         Login / داخل ہوں
                     </button>
+                    
+                    <div className="mt-4 text-xs text-gray-500 text-center">
+                        <p>Demo Credentials:</p>
+                        <p>Federal: <b>federal</b></p>
+                        <p>Province: <b>punjab admin</b>, <b>sindh admin</b></p>
+                        <p>Password: <b>password</b></p>
+                    </div>
                 </form>
             </div>
         </div>

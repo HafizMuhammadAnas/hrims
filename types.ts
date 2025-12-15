@@ -2,17 +2,20 @@
 export enum UserRole {
     FEDERAL_ADMIN = 'federal_admin',
     PROVINCIAL_ADMIN = 'provincial_admin',
-    SECTOR_ADMIN = 'sector_admin'
+    DEPARTMENT_ADMIN = 'department_admin',
+    VIEWER = 'viewer'
 }
 
 export interface User {
     id?: string;
     username: string;
     role: UserRole;
-    province?: string; // For Provincial & Sector Admins
-    sectorId?: string; // Only for Sector Admins
-    sectorName?: string; // Only for Sector Admins
+    province?: string; // For Provincial & Department Admins
+    departmentId?: string; // Only for Department Admins
+    departmentName?: string; // Only for Department Admins
     name: string;
+    email?: string;
+    contactNumber?: string;
 }
 
 export type RequestStatus = 'pending' | 'in-progress' | 'completed' | 'overdue';
@@ -106,24 +109,24 @@ export interface UPRStat {
     l2: string;
 }
 
-// --- Sector Management Types ---
-export interface Sector {
+// --- Department Management Types ---
+export interface Department {
     id: string;
     name: string;
     type: 'health' | 'education' | 'law' | 'social' | 'labor';
 }
 
-export type SectorTaskStatus = 'assigned' | 'submitted';
+export type DepartmentTaskStatus = 'assigned' | 'submitted';
 
-export interface SectorTask {
+export interface DepartmentTask {
     taskId: string;
     reqId: string;      // Linked Federal Request
     province: string;
-    sectorId: string;
-    sectorName: string;
-    status: SectorTaskStatus;
+    departmentId: string;
+    departmentName: string;
+    status: DepartmentTaskStatus;
     assignedDate: string;
     submissionDate?: string;
-    responseData?: string; // The data returned by the sector
+    responseData?: string; // The data returned by the department
     attachmentUrl?: string; // Link to uploaded file/doc
 }

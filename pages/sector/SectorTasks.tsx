@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '../../services/mockDb';
-import { User, SectorTask, HRRequest } from '../../types';
+import { User, DepartmentTask, HRRequest } from '../../types';
 import { ClipboardList, Clock, CheckCircle, Upload, Send, FileText, Link as LinkIcon } from 'lucide-react';
 
 interface Props {
@@ -9,8 +9,8 @@ interface Props {
 }
 
 const SectorTasks: React.FC<Props> = ({ user }) => {
-    const [tasks, setTasks] = useState<SectorTask[]>([]);
-    const [selectedTask, setSelectedTask] = useState<SectorTask | null>(null);
+    const [tasks, setTasks] = useState<DepartmentTask[]>([]);
+    const [selectedTask, setSelectedTask] = useState<DepartmentTask | null>(null);
     const [linkedRequest, setLinkedRequest] = useState<HRRequest | null>(null);
     
     // Response Form
@@ -18,13 +18,13 @@ const SectorTasks: React.FC<Props> = ({ user }) => {
     const [attachmentUrl, setAttachmentUrl] = useState('');
 
     useEffect(() => {
-        if (user.province && user.sectorId) {
-            const t = db.getTasksForSector(user.province, user.sectorId);
+        if (user.province && user.departmentId) {
+            const t = db.getTasksForDepartment(user.province, user.departmentId);
             setTasks(t);
         }
     }, [user]);
 
-    const handleSelectTask = (task: SectorTask) => {
+    const handleSelectTask = (task: DepartmentTask) => {
         setSelectedTask(task);
         const req = db.getRequestById(task.reqId);
         setLinkedRequest(req || null);
@@ -36,11 +36,11 @@ const SectorTasks: React.FC<Props> = ({ user }) => {
         e.preventDefault();
         if (!selectedTask) return;
 
-        db.submitSectorTask(selectedTask.taskId, responseData, attachmentUrl);
+        db.submitDepartmentTask(selectedTask.taskId, responseData, attachmentUrl);
         alert('Task submitted successfully to Provincial Admin.');
         
         // Refresh
-        const t = db.getTasksForSector(user.province!, user.sectorId!);
+        const t = db.getTasksForDepartment(user.province!, user.departmentId!);
         setTasks(t);
         setSelectedTask(null);
     };

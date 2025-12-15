@@ -2,28 +2,41 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../services/mockDb';
 import { User, HRRequest } from '../../types';
-import { Eye, ArrowRight, CheckCircle, Activity, FileText, X } from 'lucide-react';
+import { Eye, ArrowRight, Activity, FileText, X } from 'lucide-react';
 
 interface Props {
     user: User;
     onNavigate: (path: string) => void;
+    routes?: {
+        distribution: string;
+        monitoring: string;
+        history: string;
+    };
 }
 
 type CustomStatus = 'Untouch' | 'Distributed' | 'In Process' | 'Response Delivered';
 
-const ReceivedRequests: React.FC<Props> = ({ user, onNavigate }) => {
+const ReceivedRequests: React.FC<Props> = ({ 
+    user, 
+    onNavigate,
+    routes = {
+        distribution: '/province-distribution',
+        monitoring: '/province-monitoring',
+        history: '/province-history'
+    }
+}) => {
     const [requests, setRequests] = useState<HRRequest[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<HRRequest | null>(null);
 
     useEffect(() => {
-        // Fetch all requests targeting this province
+        // Fetch all requests targeting this province (or Federal acting as province)
         const data = db.getRequests(user.province);
         setRequests(data);
     }, [user]);
 
     // Helper to calculate the specific status requested
     const getCustomStatus = (req: HRRequest): CustomStatus => {
-        const tasks = db.getSectorTasks(req.id, user.province!);
+        const tasks = db.getDepartmentTasks(req.id, user.province!);
         const response = db.getResponses(user.province).find(r => r.reqId === req.id);
 
         if (response) return 'Response Delivered';
@@ -54,16 +67,16 @@ const ReceivedRequests: React.FC<Props> = ({ user, onNavigate }) => {
         switch (status) {
             case 'Untouch':
                 // Proceed for distribution
-                onNavigate('/province-distribution');
+                onNavigate(routes.distribution);
                 break;
             case 'Distributed':
             case 'In Process':
                 // View Progress
-                onNavigate('/province-monitoring');
+                onNavigate(routes.monitoring);
                 break;
             case 'Response Delivered':
                 // View History
-                onNavigate('/province-history');
+                onNavigate(routes.history);
                 break;
         }
     };
@@ -71,8 +84,13 @@ const ReceivedRequests: React.FC<Props> = ({ user, onNavigate }) => {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-2xl font-bold text-[#01411C]">Received Requests</h2>
-                <p className="text-gray-500 text-sm">Master list of all federal requests received by the province.</p>
+                <h2 className="text-2xl font-bold text-[#01411C]">{user.province === 'Federal' ? 'Internal Active Requests' : 'Received Requests'}</h2>
+                <p className="text-gray-500 text-sm">
+                    {user.province === 'Federal' 
+                        ? 'Master list of requests being processed by Federal Departments.'
+                        : 'Master list of all federal requests received by the province.'
+                    }
+                </p>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -82,7 +100,7 @@ const ReceivedRequests: React.FC<Props> = ({ user, onNavigate }) => {
                             <th className="p-4 text-sm font-semibold text-gray-600">Request ID</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Title</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Convention</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Received Date</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600">Date</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
                             <th className="p-4 text-sm font-semibold text-gray-600 text-center">Actions</th>
                         </tr>

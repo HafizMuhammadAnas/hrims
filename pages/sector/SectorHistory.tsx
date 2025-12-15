@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { db } from '../../services/mockDb';
 import { User } from '../../types';
 import { History, FileText, CheckCircle, Clock } from 'lucide-react';
@@ -9,8 +9,8 @@ interface Props {
 }
 
 const SectorHistory: React.FC<Props> = ({ user }) => {
-    const tasks = user.province && user.sectorId 
-        ? db.getTasksForSector(user.province, user.sectorId).filter(t => t.status === 'submitted') 
+    const tasks = user.province && user.departmentId 
+        ? db.getTasksForDepartment(user.province, user.departmentId).filter(t => t.status === 'submitted') 
         : [];
 
     return (
@@ -19,7 +19,7 @@ const SectorHistory: React.FC<Props> = ({ user }) => {
                 <h2 className="text-2xl font-bold text-[#01411C] flex items-center gap-2">
                     <History /> Submission History
                 </h2>
-                <p className="text-gray-500 text-sm">Archives of all completed tasks for {user.sectorName}.</p>
+                <p className="text-gray-500 text-sm">Archives of all completed tasks for {user.departmentName}.</p>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

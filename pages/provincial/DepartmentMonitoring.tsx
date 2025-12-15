@@ -9,7 +9,7 @@ interface Props {
     onNavigate?: (path: string) => void;
 }
 
-const SectorMonitoring: React.FC<Props> = ({ user, onNavigate }) => {
+const DepartmentMonitoring: React.FC<Props> = ({ user, onNavigate }) => {
     // State
     const [allTasks, setAllTasks] = useState<DepartmentTask[]>([]);
     const [uniqueRequests, setUniqueRequests] = useState<HRRequest[]>([]);
@@ -69,8 +69,8 @@ const SectorMonitoring: React.FC<Props> = ({ user, onNavigate }) => {
         <div className="space-y-6">
             <div className="flex justify-between items-end">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#01411C]">Sector Monitoring</h2>
-                    <p className="text-gray-500 text-sm">Track progress and view responses from assigned sectors.</p>
+                    <h2 className="text-2xl font-bold text-[#01411C]">Department Monitoring</h2>
+                    <p className="text-gray-500 text-sm">Track progress and view responses from assigned departments.</p>
                 </div>
             </div>
 
@@ -105,7 +105,7 @@ const SectorMonitoring: React.FC<Props> = ({ user, onNavigate }) => {
                     <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
                             <th className="p-4 text-sm font-semibold text-gray-600">Request ID</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Sector Name</th>
+                            <th className="p-4 text-sm font-semibold text-gray-600">Department Name</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Assigned Date</th>
                             <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
                             <th className="p-4 text-sm font-semibold text-gray-600 text-center">Actions</th>
@@ -169,7 +169,7 @@ const SectorMonitoring: React.FC<Props> = ({ user, onNavigate }) => {
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-start">
                             <div>
-                                <h3 className="text-xl font-bold text-[#01411C]">Sector Response</h3>
+                                <h3 className="text-xl font-bold text-[#01411C]">Department Response</h3>
                                 <p className="text-sm text-gray-500">{viewingTask.departmentName}</p>
                             </div>
                             <button onClick={() => setViewingTask(null)} className="text-gray-400 hover:text-gray-700">
@@ -211,4 +211,4 @@ const SectorMonitoring: React.FC<Props> = ({ user, onNavigate }) => {
     );
 };
 
-export default SectorMonitoring;
+export default DepartmentMonitoring;

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, UserRole } from '../types';
-import { LayoutDashboard, Send, BarChart2, BookOpen, Inbox, Layers, FileCheck, Target, Globe, RefreshCcw, PieChart, History, Users, Activity, FileText, ClipboardList, List } from 'lucide-react';
+import { LayoutDashboard, Send, BarChart2, BookOpen, Inbox, Layers, FileCheck, Target, Globe, RefreshCcw, PieChart, History, Users, Activity, FileText, ClipboardList, List, UserCog, Building2 } from 'lucide-react';
 
 interface SidebarProps {
     user: User;
@@ -12,6 +12,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ user, isOpen, currentPath, onNavigate }) => {
     const isActive = (path: string) => currentPath === path;
+    const isViewer = user.role === UserRole.VIEWER;
 
     const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
         <a 
@@ -49,7 +50,16 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isOpen, currentPath, onNavigate
                             <NavItem to="/responses" icon={Inbox} label="Review Responses" />
                             <NavItem to="/compilation" icon={Layers} label="Compilation Center" />
                             <NavItem to="/compiled-records" icon={FileCheck} label="Compiled Records" />
-                            <NavItem to="/report-generator" icon={PieChart} label="Report Generator" />
+                            <NavItem to="/federal-users-mgmt" icon={UserCog} label="User Management" />
+                        </div>
+
+                        <div className="nav-section-title">Federal Department Actions</div>
+                        <div className="nav-sub">
+                             <NavItem to="/federal-received" icon={List} label="Active Requests" />
+                             <NavItem to="/federal-distribution" icon={ClipboardList} label="Department Distribution" />
+                             <NavItem to="/federal-monitoring" icon={Activity} label="Department Monitoring" />
+                             <NavItem to="/federal-compilation" icon={FileText} label="Federal Compilation" />
+                             <NavItem to="/federal-history" icon={History} label="Internal History" />
                         </div>
                     </>
                 )}
@@ -61,28 +71,46 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isOpen, currentPath, onNavigate
                          <div className="nav-sub">
                             <NavItem to="/province-received" icon={List} label="Received Requests" />
                             <NavItem to="/province-distribution" icon={ClipboardList} label="Request Distribution" />
-                            <NavItem to="/province-monitoring" icon={Activity} label="Sector Monitoring" />
+                            <NavItem to="/province-monitoring" icon={Activity} label="Department Monitoring" />
                             <NavItem to="/province-compilation" icon={FileText} label="Response Compilation" />
-                            <NavItem to="/province-users" icon={Users} label="Sector User Mgmt" />
+                            <NavItem to="/provincial-users-mgmt" icon={Users} label="User Management" />
                             <NavItem to="/province-history" icon={History} label="Submission History" />
                         </div>
                     </>
                 )}
                 
-                {/* Sector Admin Menus */}
-                {user.role === UserRole.SECTOR_ADMIN && (
+                {/* Department Admin Menus */}
+                {user.role === UserRole.DEPARTMENT_ADMIN && (
                     <>
-                        <div className="nav-section-title">Sector Actions</div>
+                        <div className="nav-section-title">Department Actions</div>
                         <div className="nav-sub">
-                            <NavItem to="/sector-tasks" icon={ClipboardList} label="Assigned Tasks" />
-                            <NavItem to="/sector-history" icon={History} label="Submission History" />
+                            <NavItem to="/department-tasks" icon={ClipboardList} label="Assigned Tasks" />
+                            <NavItem to="/department-history" icon={History} label="Submission History" />
                         </div>
                     </>
                 )}
 
-                <div className="nav-section-title">Reports & Info</div>
-                
+                {/* Viewer Menus (Read Only) */}
+                {isViewer && (
+                     <>
+                        <div className="nav-section-title">Read-Only Access</div>
+                        <div className="nav-sub">
+                            {user.province === 'Federal' ? (
+                                <NavItem to="/federal-history" icon={History} label="History" />
+                            ) : (
+                                <NavItem to="/province-history" icon={History} label="History" />
+                            )}
+                        </div>
+                     </>
+                )}
+
+                {/* Reports & Analysis (New Section) */}
+                <div className="nav-section-title">Reports & Analysis</div>
+                <NavItem to="/report-generator" icon={PieChart} label="Report Generator" />
                 <NavItem to="/analysis" icon={BarChart2} label="Data Analysis" />
+
+                {/* Knowledge Hub (Renamed) */}
+                <div className="nav-section-title">Knowledge Hub</div>
                 <NavItem to="/conventions" icon={BookOpen} label="Conventions Info" />
                 <NavItem to="/indicators" icon={Target} label="Human Rights Indicators" />
                 <NavItem to="/sdgs" icon={Globe} label="Sustainable Development Goals" />

@@ -2,25 +2,30 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../services/mockDb';
 import { User, HRRequest } from '../../types';
-import { SECTORS } from '../../constants';
+import { DEPARTMENTS } from '../../constants';
 import { Search, FileText, Clock, Users, ArrowRight, CheckCircle } from 'lucide-react';
 
 interface Props {
     user: User;
     onNavigate?: (path: string) => void;
+    nextPath?: string;
 }
 
-const RequestDistribution: React.FC<Props> = ({ user, onNavigate }) => {
+const RequestDistribution: React.FC<Props> = ({ 
+    user, 
+    onNavigate,
+    nextPath = '/province-monitoring'
+}) => {
     const [requests, setRequests] = useState<HRRequest[]>([]);
     const [selectedRequest, setSelectedRequest] = useState<HRRequest | null>(null);
-    const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
+    const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
     const [searchText, setSearchText] = useState('');
 
     useEffect(() => {
-        // Filter requests that DO NOT have sector tasks yet and DO NOT have a response
+        // Filter requests that DO NOT have department tasks yet and DO NOT have a response
         const allReqs = db.getRequests(user.province);
         const newReqs = allReqs.filter(req => {
-            const tasks = db.getSectorTasks(req.id, user.province!);
+            const tasks = db.getDepartmentTasks(req.id, user.province!);
             const response = db.getResponses(user.province).find(r => r.reqId === req.id);
             return tasks.length === 0 && !response;
         });
@@ -29,16 +34,16 @@ const RequestDistribution: React.FC<Props> = ({ user, onNavigate }) => {
 
     const handleAssign = () => {
         if (!selectedRequest) return;
-        if (selectedSectors.length === 0) return alert('Please select at least one sector.');
+        if (selectedDepartments.length === 0) return alert('Please select at least one department.');
 
-        selectedSectors.forEach(secId => {
-            const sector = SECTORS.find(s => s.id === secId);
-            db.assignSectorTask({
+        selectedDepartments.forEach(deptId => {
+            const dept = DEPARTMENTS.find(s => s.id === deptId);
+            db.assignDepartmentTask({
                 taskId: `TSK-${Math.floor(Math.random() * 10000)}`,
                 reqId: selectedRequest.id,
                 province: user.province!,
-                sectorId: secId,
-                sectorName: sector?.name || 'Unknown',
+                departmentId: deptId,
+                departmentName: dept?.name || 'Unknown',
                 status: 'assigned',
                 assignedDate: new Date().toISOString().split('T')[0]
             });
@@ -47,28 +52,28 @@ const RequestDistribution: React.FC<Props> = ({ user, onNavigate }) => {
         // Update request status to in-progress to signal Federal admin
         db.updateRequest(selectedRequest.id, { status: 'in-progress' });
 
-        alert(`Request distributed to ${selectedSectors.length} sectors.`);
+        alert(`Request distributed to ${selectedDepartments.length} departments.`);
         
         // Refresh list
         const allReqs = db.getRequests(user.province);
         const newReqs = allReqs.filter(req => {
-            const tasks = db.getSectorTasks(req.id, user.province!);
+            const tasks = db.getDepartmentTasks(req.id, user.province!);
             const response = db.getResponses(user.province).find(r => r.reqId === req.id);
             return tasks.length === 0 && !response;
         });
         setRequests(newReqs);
         setSelectedRequest(null);
-        setSelectedSectors([]);
+        setSelectedDepartments([]);
         
-        if (onNavigate) onNavigate('/province-monitoring');
+        if (onNavigate) onNavigate(nextPath);
     };
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-end">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#01411C]">Request Distribution</h2>
-                    <p className="text-gray-500 text-sm">Step 1: Assign incoming federal requests to relevant provincial sectors.</p>
+                    <h2 className="text-2xl font-bold text-[#01411C]">{user.province === 'Federal' ? 'Federal Department Distribution' : 'Request Distribution'}</h2>
+                    <p className="text-gray-500 text-sm">Step 1: Assign requests to relevant {user.province === 'Federal' ? 'Federal Ministries/Departments' : 'provincial departments'}.</p>
                 </div>
                 {!selectedRequest && (
                     <div className="relative">
@@ -130,7 +135,7 @@ const RequestDistribution: React.FC<Props> = ({ user, onNavigate }) => {
                     <div className="mb-6 flex justify-between items-start">
                         <div>
                             <h2 className="text-xl font-bold text-gray-800 mb-2">Assigning: {selectedRequest.title}</h2>
-                            <p className="text-gray-600">{selectedRequest.details || "Please gather relevant data from sectors."}</p>
+                            <p className="text-gray-600">{selectedRequest.details || "Please gather relevant data from departments."}</p>
                         </div>
                         <button onClick={() => setSelectedRequest(null)} className="text-sm text-gray-500 hover:text-gray-800 underline">
                             Cancel
@@ -138,18 +143,18 @@ const RequestDistribution: React.FC<Props> = ({ user, onNavigate }) => {
                     </div>
 
                     <h3 className="font-bold text-[#01411C] mb-4 flex items-center gap-2">
-                        <Users size={18} /> Select Target Sectors
+                        <Users size={18} /> Select Target Departments
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                        {SECTORS.map(sec => (
-                            <label key={sec.id} className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${selectedSectors.includes(sec.id) ? 'border-[#01411C] bg-green-50' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        {DEPARTMENTS.map(sec => (
+                            <label key={sec.id} className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all ${selectedDepartments.includes(sec.id) ? 'border-[#01411C] bg-green-50' : 'border-gray-200 hover:bg-gray-50'}`}>
                                 <input 
                                     type="checkbox" 
-                                    checked={selectedSectors.includes(sec.id)}
+                                    checked={selectedDepartments.includes(sec.id)}
                                     onChange={(e) => {
-                                        if(e.target.checked) setSelectedSectors([...selectedSectors, sec.id]);
-                                        else setSelectedSectors(selectedSectors.filter(id => id !== sec.id));
+                                        if(e.target.checked) setSelectedDepartments([...selectedDepartments, sec.id]);
+                                        else setSelectedDepartments(selectedDepartments.filter(id => id !== sec.id));
                                     }}
                                     className="w-5 h-5 accent-[#01411C] mr-3"
                                 />
@@ -165,7 +170,7 @@ const RequestDistribution: React.FC<Props> = ({ user, onNavigate }) => {
                         <button onClick={() => setSelectedRequest(null)} className="btn btn-secondary">
                             Back
                         </button>
-                        <button onClick={handleAssign} className="btn btn-primary" disabled={selectedSectors.length === 0}>
+                        <button onClick={handleAssign} className="btn btn-primary" disabled={selectedDepartments.length === 0}>
                             Distribute Request <ArrowRight size={16} />
                         </button>
                     </div>
