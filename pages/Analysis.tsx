@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { Filter, RefreshCcw, Download, Image as ImageIcon, FileText, Calendar } from 'lucide-react';
 import { CONVENTIONS, INDICATORS, SDGS } from '../constants';
+import { HRIMS_CATEGORIES } from '../hrimsCategories';
 
 // --- Types & Constants ---
 const COLORS = ['#FFC107', '#4CAF50', '#2196F3', '#FF5722', '#9C27B0', '#00BCD4', '#795548'];
@@ -70,8 +71,27 @@ const Analysis: React.FC = () => {
         dateFrom: '',
         dateTo: '',
         hri: 'All',
-        sdg: 'All'
+        sdg: 'All',
+        category: 'All',
+        subcategory: 'All',
+        indicator: 'All'
     });
+
+    // HRIMS Mapping State for filters
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('All');
+    const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>('All');
+    const [selectedIndicatorFilter, setSelectedIndicatorFilter] = useState<string>('All');
+
+    // Get available subcategories for filter
+    const availableSubcategoriesFilter = selectedCategoryFilter !== 'All'
+        ? HRIMS_CATEGORIES.find(c => c.id === selectedCategoryFilter)?.subcategories || []
+        : [];
+
+    // Get available indicators for filter
+    const availableIndicatorsFilter = selectedSubcategoryFilter !== 'All' && selectedCategoryFilter !== 'All'
+        ? HRIMS_CATEGORIES.find(c => c.id === selectedCategoryFilter)
+            ?.subcategories.find(s => s.id === selectedSubcategoryFilter)?.indicators || []
+        : [];
 
     // --- Data State (Reactive) ---
     const [chartData, setChartData] = useState({
@@ -79,7 +99,11 @@ const Analysis: React.FC = () => {
         status: [] as any[],
         timeline: [] as any[],
         provinces: [] as any[],
-        sdgs: [] as any[]
+        sdgs: [] as any[],
+        categories: [] as any[],
+        subcategories: [] as any[],
+        allSubcategories: [] as any[], // All subcategories across all categories
+        indicators: [] as any[]
     });
 
     const [loading, setLoading] = useState(false);
@@ -135,7 +159,43 @@ const Analysis: React.FC = () => {
                     { subject: 'Gender Eq', A: rand(90, 140), fullMark: 150 },
                     { subject: 'Work', A: rand(70, 110), fullMark: 150 },
                     { subject: 'Inequality', A: rand(60, 100), fullMark: 150 },
-                ].filter(s => filters.sdg === 'All' || s.subject.includes(filters.sdg.substring(0, 5)))
+                ].filter(s => filters.sdg === 'All' || s.subject.includes(filters.sdg.substring(0, 5))),
+
+                categories: HRIMS_CATEGORIES.map(cat => ({
+                    name: cat.name.length > 30 ? cat.name.substring(0, 30) + '...' : cat.name,
+                    fullName: cat.name,
+                    value: rand(20, 80) * factor,
+                    records: rand(15, 60) * factor
+                })).filter(c => selectedCategoryFilter === 'All' || c.fullName === HRIMS_CATEGORIES.find(cat => cat.id === selectedCategoryFilter)?.name),
+
+                subcategories: selectedCategoryFilter !== 'All' 
+                    ? availableSubcategoriesFilter.map(sub => ({
+                        name: sub.name.length > 25 ? sub.name.substring(0, 25) + '...' : sub.name,
+                        fullName: sub.name,
+                        value: rand(10, 50) * factor,
+                        records: rand(8, 40) * factor
+                    })).filter(s => selectedSubcategoryFilter === 'All' || s.fullName === availableSubcategoriesFilter.find(sub => sub.id === selectedSubcategoryFilter)?.name)
+                    : [],
+
+                // All subcategories across all categories (for the main subcategory graph)
+                allSubcategories: HRIMS_CATEGORIES.flatMap(cat => 
+                    cat.subcategories.map(sub => ({
+                        name: sub.name.length > 30 ? sub.name.substring(0, 30) + '...' : sub.name,
+                        fullName: sub.name,
+                        categoryName: cat.name.length > 20 ? cat.name.substring(0, 20) + '...' : cat.name,
+                        value: rand(5, 45) * factor,
+                        records: rand(3, 35) * factor
+                    }))
+                ).slice(0, 20), // Limit to top 20 for better visualization
+
+                indicators: selectedSubcategoryFilter !== 'All'
+                    ? availableIndicatorsFilter.map(ind => ({
+                        name: ind.text.length > 40 ? ind.text.substring(0, 40) + '...' : ind.text,
+                        fullText: ind.text,
+                        value: rand(5, 30) * factor,
+                        records: rand(3, 25) * factor
+                    })).filter(i => selectedIndicatorFilter === 'All' || i.fullText === availableIndicatorsFilter.find(ind => ind.id === selectedIndicatorFilter)?.text)
+                    : []
             });
             setLoading(false);
         }, 600);
@@ -154,8 +214,14 @@ const Analysis: React.FC = () => {
             dateFrom: '',
             dateTo: '',
             hri: 'All',
-            sdg: 'All'
+            sdg: 'All',
+            category: 'All',
+            subcategory: 'All',
+            indicator: 'All'
         });
+        setSelectedCategoryFilter('All');
+        setSelectedSubcategoryFilter('All');
+        setSelectedIndicatorFilter('All');
     };
 
     // --- Chart Container Wrapper Component ---
@@ -295,6 +361,74 @@ const Analysis: React.FC = () => {
                         </select>
                     </div>
 
+                    {/* HRIMS Mapping Filters */}
+                    <div className="form-field">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Category / زمرہ</label>
+                        <select 
+                            value={selectedCategoryFilter}
+                            onChange={e => {
+                                setSelectedCategoryFilter(e.target.value);
+                                setSelectedSubcategoryFilter('All');
+                                setSelectedIndicatorFilter('All');
+                                setFilters({
+                                    ...filters,
+                                    category: e.target.value,
+                                    subcategory: 'All',
+                                    indicator: 'All'
+                                });
+                            }}
+                            className="p-2 border rounded-md text-sm"
+                        >
+                            <option value="All">All Categories</option>
+                            {HRIMS_CATEGORIES.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-field">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Subcategory / ذیلی زمرہ</label>
+                        <select 
+                            value={selectedSubcategoryFilter}
+                            onChange={e => {
+                                setSelectedSubcategoryFilter(e.target.value);
+                                setSelectedIndicatorFilter('All');
+                                setFilters({
+                                    ...filters,
+                                    subcategory: e.target.value,
+                                    indicator: 'All'
+                                });
+                            }}
+                            disabled={selectedCategoryFilter === 'All'}
+                            className="p-2 border rounded-md text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        >
+                            <option value="All">All Subcategories</option>
+                            {availableSubcategoriesFilter.map(sub => (
+                                <option key={sub.id} value={sub.id}>{sub.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-field">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Indicator / اشارہ</label>
+                        <select 
+                            value={selectedIndicatorFilter}
+                            onChange={e => {
+                                setSelectedIndicatorFilter(e.target.value);
+                                setFilters({...filters, indicator: e.target.value});
+                            }}
+                            disabled={selectedSubcategoryFilter === 'All'}
+                            className="p-2 border rounded-md text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        >
+                            <option value="All">All Indicators</option>
+                            {availableIndicatorsFilter.map(ind => (
+                                <option key={ind.id} value={ind.id} title={ind.text}>
+                                    {ind.text.length > 50 ? ind.text.substring(0, 50) + '...' : ind.text}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="lg:col-span-2 flex items-end gap-3 justify-end">
                         <button 
                             onClick={handleReset}
@@ -361,6 +495,95 @@ const Analysis: React.FC = () => {
                         </PieChart>
                     </ResponsiveContainer>
                 </ChartCard>
+            </div>
+
+            {/* Row 1.5: HRIMS Mapping Graphs */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <ChartCard title="Records by Category" id="chart-categories">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData.categories} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 10}} />
+                            <Tooltip />
+                            <Bar dataKey="records" fill="#01411C" radius={[0, 4, 4, 0]} name="Total Records" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Records by Subcategory" id="chart-all-subcategories">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData.allSubcategories} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={120} tick={{fontSize: 9}} />
+                            <Tooltip 
+                                content={({ active, payload }) => {
+                                    if (active && payload && payload.length) {
+                                        const data = payload[0].payload;
+                                        return (
+                                            <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
+                                                <p className="font-semibold text-sm">{data.fullName}</p>
+                                                <p className="text-xs text-gray-500">Category: {data.categoryName}</p>
+                                                <p className="text-sm text-[#1E88E5]">Records: {data.records}</p>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                }}
+                            />
+                            <Bar dataKey="records" fill="#1E88E5" radius={[0, 4, 4, 0]} name="Total Records" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+
+                {selectedCategoryFilter !== 'All' && chartData.subcategories.length > 0 ? (
+                    <ChartCard title="Subcategories (Selected Category)" id="chart-subcategories">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData.subcategories} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" />
+                                <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 10}} />
+                                <Tooltip />
+                                <Bar dataKey="records" fill="#00ACC1" radius={[0, 4, 4, 0]} name="Total Records" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+                ) : selectedSubcategoryFilter !== 'All' && chartData.indicators.length > 0 ? (
+                    <ChartCard title="Records by Indicator" id="chart-indicators">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData.indicators} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" />
+                                <YAxis dataKey="name" type="category" width={120} tick={{fontSize: 9}} />
+                                <Tooltip />
+                                <Bar dataKey="records" fill="#00ACC1" radius={[0, 4, 4, 0]} name="Total Records" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+                ) : (
+                    <ChartCard title="Category Distribution" id="chart-category-pie">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={chartData.categories.slice(0, 8)}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, percent }) => `${name.substring(0, 15)} ${(percent * 100).toFixed(0)}%`}
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {chartData.categories.slice(0, 8).map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </ChartCard>
+                )}
             </div>
 
             {/* Row 2: Conventions & Provinces */}

@@ -28,29 +28,67 @@ const SubmissionHistory: React.FC<Props> = ({ user }) => {
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-[#01411C]">Submission History</h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Response ID</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Request Title</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Date</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
-                            <th className="p-4 text-sm font-semibold text-gray-600">Feedback</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {responses.map(res => (
-                            <tr key={res.resId} className="hover:bg-gray-50 border-b border-gray-100">
-                                <td className="p-4 text-sm text-gray-800 font-medium">{res.resId}</td>
-                                <td className="p-4 text-sm text-gray-600">{res.title}</td>
-                                <td className="p-4 text-sm text-gray-600">{res.submissionDate}</td>
-                                <td className="p-4">{getStatusBadge(res.reviewStatus)}</td>
-                                <td className="p-4 text-sm text-gray-500 italic">{res.comments || '-'}</td>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left min-w-[800px]">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Response ID</th>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Request Title</th>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Date</th>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Status</th>
+                                <th className="p-4 text-sm font-semibold text-gray-600">Feedback</th>
                             </tr>
-                        ))}
-                        {responses.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">No history available</td></tr>}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {responses.map(res => (
+                                <tr key={res.resId} className="hover:bg-gray-50 border-b border-gray-100">
+                                    <td className="p-4 text-sm text-gray-800 font-medium">{res.resId}</td>
+                                    <td className="p-4 text-sm text-gray-600">{res.title}</td>
+                                    <td className="p-4 text-sm text-gray-600">{res.submissionDate}</td>
+                                    <td className="p-4">{getStatusBadge(res.reviewStatus)}</td>
+                                    <td className="p-4 text-sm text-gray-500 italic">{res.comments || '-'}</td>
+                                </tr>
+                            ))}
+                            {responses.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-gray-500">No history available</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden">
+                    {responses.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">No history available</div>
+                    ) : (
+                        <div className="divide-y divide-gray-200">
+                            {responses.map(res => (
+                                <div key={res.resId} className="p-4 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <div className="text-xs text-gray-500 mb-1">Response ID</div>
+                                            <div className="text-sm font-medium text-gray-800">{res.resId}</div>
+                                        </div>
+                                        <div>{getStatusBadge(res.reviewStatus)}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1">Request Title</div>
+                                        <div className="text-sm text-gray-600">{res.title}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1">Date</div>
+                                        <div className="text-sm text-gray-600">{res.submissionDate}</div>
+                                    </div>
+                                    {res.comments && (
+                                        <div>
+                                            <div className="text-xs text-gray-500 mb-1">Feedback</div>
+                                            <div className="text-sm text-gray-500 italic">{res.comments}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../services/mockDb';
 import { User, DepartmentTask, HRRequest } from '../../types';
 import { CONVENTIONS, SDGS, INDICATORS } from '../../constants';
+import { HRIMS_CATEGORIES } from '../../hrimsCategories';
 import { ClipboardList, Clock, CheckCircle, Upload, Send, FileText, Link as LinkIcon, Plus, X, Calendar, AlertCircle } from 'lucide-react';
 
 interface Props {
@@ -28,6 +29,22 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
         tempLink: '' // for the input field
     });
 
+    // HRIMS Mapping State
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+    const [selectedIndicator, setSelectedIndicator] = useState<string>('');
+
+    // Get available subcategories based on selected category
+    const availableSubcategories = selectedCategory 
+        ? HRIMS_CATEGORIES.find(c => c.id === selectedCategory)?.subcategories || []
+        : [];
+
+    // Get available indicators based on selected subcategory
+    const availableIndicators = selectedSubcategory && selectedCategory
+        ? HRIMS_CATEGORIES.find(c => c.id === selectedCategory)
+            ?.subcategories.find(s => s.id === selectedSubcategory)?.indicators || []
+        : [];
+
     useEffect(() => {
         if (user.province && user.departmentId) {
             const t = db.getTasksForDepartment(user.province, user.departmentId);
@@ -38,21 +55,62 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
     const handleSelectTask = (task: DepartmentTask) => {
         const req = db.getRequestById(task.reqId);
         setLinkedRequest(req || null);
-        
-        // Reset Form
+
+        // Default form values
+        let recommendation = '';
+        let thematicArea = '';
+        let uprRecommendation = '';
+        let sdgGoal = '';
+        let humanRightsIndicator = '';
+        let accomplishmentDate = '';
+        let status = 'Ongoing';
+        let description = task.responseData || '';
+        let links: string[] = [];
+
+        // Try to hydrate the form from previously saved structured response (JSON)
+        if (task.responseData) {
+            try {
+                const parsed = JSON.parse(task.responseData);
+                recommendation = parsed.recommendation || recommendation;
+                thematicArea = parsed.thematicArea || thematicArea;
+                uprRecommendation = parsed.upr || uprRecommendation;
+                sdgGoal = parsed.sdg || sdgGoal;
+                humanRightsIndicator = parsed.hri || humanRightsIndicator;
+                accomplishmentDate = parsed.accomplishmentDate || accomplishmentDate;
+                status = parsed.status || status;
+                description = parsed.description || description;
+                links = Array.isArray(parsed.links) ? parsed.links : links;
+
+                // HRIMS mapping (fallback to request/task if not present in JSON)
+                setSelectedCategory(parsed.categoryId || req?.categoryId || task.categoryId || '');
+                setSelectedSubcategory(parsed.subcategoryId || req?.subcategoryId || task.subcategoryId || '');
+                setSelectedIndicator(parsed.indicatorId || task.indicatorId || '');
+            } catch {
+                // If old plain-text data, fall back to existing behavior
+                setSelectedCategory(req?.categoryId || task.categoryId || '');
+                setSelectedSubcategory(req?.subcategoryId || task.subcategoryId || '');
+                setSelectedIndicator(req?.indicatorId || task.indicatorId || '');
+            }
+        } else {
+            // No responseData yet – use mapping from request/task only
+            setSelectedCategory(req?.categoryId || task.categoryId || '');
+            setSelectedSubcategory(req?.subcategoryId || task.subcategoryId || '');
+            setSelectedIndicator(req?.indicatorId || task.indicatorId || '');
+        }
+
         setFormData({
-            recommendation: '',
-            thematicArea: '',
-            uprRecommendation: '',
-            sdgGoal: '',
-            humanRightsIndicator: '',
-            accomplishmentDate: '',
-            status: 'Ongoing',
-            description: task.responseData || '', // If re-opening draft (simple string support)
-            links: [],
+            recommendation,
+            thematicArea,
+            uprRecommendation,
+            sdgGoal,
+            humanRightsIndicator,
+            accomplishmentDate,
+            status,
+            description,
+            links,
             tempLink: ''
         });
-        
+
         setSelectedTask(task);
     };
 
@@ -87,8 +145,17 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
             accomplishmentDate: formData.accomplishmentDate,
             description: formData.description,
             links: formData.links,
-            status: formData.status
+            status: formData.status,
+            categoryId: selectedCategory,
+            subcategoryId: selectedSubcategory,
+            indicatorId: selectedIndicator
         });
+
+        // Update task with HRIMS mapping
+        if (selectedTask) {
+            // Note: This would need to be added to the mockDb if we want to persist it separately
+            // For now, it's included in the responseData JSON
+        }
 
         db.submitDepartmentTask(selectedTask.taskId, structuredResponse, ''); // Attachment URL handled visually
         alert('Record saved and submitted successfully.');
@@ -218,7 +285,64 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 </select>
                             </div>
 
-                            {/* Row 3 */}
+                            {/* HRIMS Category Mapping */}
+                            <div className="form-field">
+                                <label className="text-sm font-semibold text-gray-700 mb-1">Category / زمرہ *</label>
+                                <select 
+                                    value={selectedCategory}
+                                    onChange={e => {
+                                        setSelectedCategory(e.target.value);
+                                        setSelectedSubcategory(''); // Reset subcategory when category changes
+                                        setSelectedIndicator(''); // Reset indicator when category changes
+                                    }}
+                                    required
+                                    className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#01411C] focus:border-transparent outline-none"
+                                >
+                                    <option value="">Select Category</option>
+                                    {HRIMS_CATEGORIES.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-field">
+                                <label className="text-sm font-semibold text-gray-700 mb-1">Subcategory / ذیلی زمرہ *</label>
+                                <select 
+                                    value={selectedSubcategory}
+                                    onChange={e => {
+                                        setSelectedSubcategory(e.target.value);
+                                        setSelectedIndicator(''); // Reset indicator when subcategory changes
+                                    }}
+                                    required
+                                    disabled={!selectedCategory}
+                                    className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#01411C] focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">Select Subcategory</option>
+                                    {availableSubcategories.map(sub => (
+                                        <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Row 3: Indicator */}
+                            <div className="form-field">
+                                <label className="text-sm font-semibold text-gray-700 mb-1">Indicator / اشارہ *</label>
+                                <select 
+                                    value={selectedIndicator}
+                                    onChange={e => setSelectedIndicator(e.target.value)}
+                                    required
+                                    disabled={!selectedSubcategory}
+                                    className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#01411C] focus:border-transparent outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">Select Indicator</option>
+                                    {availableIndicators.map(ind => (
+                                        <option key={ind.id} value={ind.id} title={ind.text}>
+                                            {ind.text.length > 80 ? ind.text.substring(0, 80) + '...' : ind.text}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Row 4 */}
                             <div className="form-field">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">Thematic Area</label>
                                 <input 
@@ -242,7 +366,7 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 </select>
                             </div>
 
-                            {/* Row 4 */}
+                            {/* Row 5 */}
                             <div className="form-field">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">SDG Goal</label>
                                 <select 
@@ -266,7 +390,7 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 </select>
                             </div>
 
-                            {/* Row 5 */}
+                            {/* Row 6 */}
                             <div className="form-field">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">Relevant Date *</label>
                                 <div className="relative">
@@ -292,7 +416,7 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Row 6: Status - Full Width */}
+                            {/* Row 7: Status - Full Width */}
                             <div className="form-field md:col-span-2">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">Status *</label>
                                 <select 
@@ -306,7 +430,7 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 </select>
                             </div>
 
-                            {/* Row 7: Description - Full Width */}
+                            {/* Row 8: Description - Full Width */}
                             <div className="form-field md:col-span-2">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">Description *</label>
                                 <textarea 
@@ -318,7 +442,7 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 ></textarea>
                             </div>
 
-                            {/* Row 8: Documents */}
+                            {/* Row 9: Documents */}
                             <div className="form-field md:col-span-2">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">Documents</label>
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group">
@@ -328,7 +452,7 @@ const DepartmentTasks: React.FC<Props> = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Row 9: Links */}
+                            {/* Row 10: Links */}
                             <div className="form-field md:col-span-2">
                                 <label className="text-sm font-semibold text-gray-700 mb-1">Links</label>
                                 <div className="flex gap-2 mb-3">

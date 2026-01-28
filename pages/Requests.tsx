@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, UserRole, HRRequest, RequestStatus } from '../types';
 import { db } from '../services/mockDb';
 import { CONVENTIONS } from '../constants';
+import { HRIMS_CATEGORIES } from '../hrimsCategories';
 import { Plus, Search, Eye, Save, X, MoreVertical, Edit, Trash2, Printer, Download } from 'lucide-react';
 
 interface RequestsProps {
@@ -27,8 +28,27 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
         prov: 'Punjab',
         date: '',
         details: '',
-        status: 'pending'
+        status: 'pending',
+        categoryId: '',
+        subcategoryId: '',
+        indicatorId: ''
     });
+
+    // HRIMS Mapping State
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+    const [selectedIndicator, setSelectedIndicator] = useState<string>('');
+
+    // Get available subcategories based on selected category
+    const availableSubcategories = selectedCategory 
+        ? HRIMS_CATEGORIES.find(c => c.id === selectedCategory)?.subcategories || []
+        : [];
+
+    // Get available indicators based on selected subcategory
+    const availableIndicators = selectedSubcategory && selectedCategory
+        ? HRIMS_CATEGORIES.find(c => c.id === selectedCategory)
+            ?.subcategories.find(s => s.id === selectedSubcategory)?.indicators || []
+        : [];
 
     useEffect(() => {
         refreshRequests();
@@ -88,7 +108,10 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
             prov: formData.prov!,
             date: formData.date!,
             details: formData.details,
-            status: 'pending'
+            status: 'pending',
+            categoryId: selectedCategory,
+            subcategoryId: selectedSubcategory,
+            indicatorId: selectedIndicator
         };
         db.addRequest(req);
         closeModals();
@@ -105,7 +128,10 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
             prov: formData.prov,
             date: formData.date,
             details: formData.details,
-            status: formData.status as RequestStatus
+            status: formData.status as RequestStatus,
+            categoryId: selectedCategory,
+            subcategoryId: selectedSubcategory,
+            indicatorId: selectedIndicator
         });
         
         closeModals();
@@ -144,8 +170,14 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
             prov: 'Punjab',
             date: '',
             details: '',
-            status: 'pending'
+            status: 'pending',
+            categoryId: '',
+            subcategoryId: '',
+            indicatorId: ''
         });
+        setSelectedCategory('');
+        setSelectedSubcategory('');
+        setSelectedIndicator('');
         setModalMode('create');
         setViewingRequest(null);
     };
@@ -153,6 +185,9 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
     const openViewModal = (req: HRRequest) => {
         setViewingRequest(req);
         setFormData({ ...req });
+        setSelectedCategory(req.categoryId || '');
+        setSelectedSubcategory(req.subcategoryId || '');
+        setSelectedIndicator(req.indicatorId || '');
         setModalMode('view');
         setDropdownOpenId(null);
     };
@@ -160,6 +195,9 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
     const openEditModal = (req: HRRequest) => {
         setViewingRequest(req);
         setFormData({ ...req });
+        setSelectedCategory(req.categoryId || '');
+        setSelectedSubcategory(req.subcategoryId || '');
+        setSelectedIndicator(req.indicatorId || '');
         setModalMode('edit');
         setDropdownOpenId(null);
     };
@@ -343,6 +381,33 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
                                 <div className="detail-label">Province:</div><div className="detail-value">{viewingRequest.prov}</div>
                                 <div className="detail-label">Due Date:</div><div className="detail-value">{viewingRequest.date}</div>
                                 <div className="detail-label">Status:</div><div className="detail-value"><span className={`status-badge status-${viewingRequest.status}`} style={{borderRadius:'20px'}}>{viewingRequest.status.charAt(0).toUpperCase() + viewingRequest.status.slice(1).replace('-', ' ')}</span></div>
+                                {viewingRequest.categoryId && (
+                                    <>
+                                        <div className="detail-label">Category:</div>
+                                        <div className="detail-value">
+                                            {HRIMS_CATEGORIES.find(c => c.id === viewingRequest.categoryId)?.name || viewingRequest.categoryId}
+                                        </div>
+                                        {viewingRequest.subcategoryId && (
+                                            <>
+                                                <div className="detail-label">Subcategory:</div>
+                                                <div className="detail-value">
+                                                    {HRIMS_CATEGORIES.find(c => c.id === viewingRequest.categoryId)
+                                                        ?.subcategories.find(s => s.id === viewingRequest.subcategoryId)?.name || viewingRequest.subcategoryId}
+                                                </div>
+                                                {viewingRequest.indicatorId && (
+                                                    <>
+                                                        <div className="detail-label">Indicator:</div>
+                                                        <div className="detail-value">
+                                                            {HRIMS_CATEGORIES.find(c => c.id === viewingRequest.categoryId)
+                                                                ?.subcategories.find(s => s.id === viewingRequest.subcategoryId)
+                                                                ?.indicators.find(i => i.id === viewingRequest.indicatorId)?.text || viewingRequest.indicatorId}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         </div>
                         <div className="content-section">
@@ -437,7 +502,61 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
                             </div>
                         </div>
 
+                        {/* HRIMS Category Mapping */}
                         <div className="form-row">
+                            <div className="form-field">
+                                <label>Category / زمرہ *</label>
+                                <select 
+                                    value={selectedCategory}
+                                    onChange={e => {
+                                        setSelectedCategory(e.target.value);
+                                        setSelectedSubcategory(''); // Reset subcategory when category changes
+                                        setSelectedIndicator(''); // Reset indicator when category changes
+                                    }}
+                                    required
+                                >
+                                    <option value="">Select Category</option>
+                                    {HRIMS_CATEGORIES.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-field">
+                                <label>Subcategory / ذیلی زمرہ *</label>
+                                <select 
+                                    value={selectedSubcategory}
+                                    onChange={e => {
+                                        setSelectedSubcategory(e.target.value);
+                                        setSelectedIndicator(''); // Reset indicator when subcategory changes
+                                    }}
+                                    required
+                                    disabled={!selectedCategory}
+                                >
+                                    <option value="">Select Subcategory</option>
+                                    {availableSubcategories.map(sub => (
+                                        <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-field">
+                                <label>Indicator / اشارہ *</label>
+                                <select 
+                                    value={selectedIndicator}
+                                    onChange={e => setSelectedIndicator(e.target.value)}
+                                    required
+                                    disabled={!selectedSubcategory}
+                                >
+                                    <option value="">Select Indicator</option>
+                                    {availableIndicators.map(ind => (
+                                        <option key={ind.id} value={ind.id} title={ind.text}>
+                                            {ind.text.length > 80 ? ind.text.substring(0, 80) + '...' : ind.text}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="form-field">
                                 <label>Due Date *</label>
                                 <input 
@@ -447,7 +566,6 @@ const Requests: React.FC<RequestsProps> = ({ user }) => {
                                     onChange={e => setFormData({...formData, date: e.target.value})}
                                 />
                             </div>
-                            
                             {modalMode === 'edit' && (
                                 <div className="form-field">
                                     <label>Status</label>

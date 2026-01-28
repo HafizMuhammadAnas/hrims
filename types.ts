@@ -43,6 +43,9 @@ export interface HRRequest {
     status: RequestStatus;
     details?: string;
     federalGroupId?: string; // Links to a wider federal initiative
+    categoryId?: string; // HRIMS Category
+    subcategoryId?: string; // HRIMS Subcategory
+    indicatorId?: string; // HRIMS Indicator
 }
 
 export interface FederalGroup {
@@ -129,4 +132,7 @@ export interface DepartmentTask {
     submissionDate?: string;
     responseData?: string; // The data returned by the department
     attachmentUrl?: string; // Link to uploaded file/doc
+    categoryId?: string; // HRIMS Category
+    subcategoryId?: string; // HRIMS Subcategory
+    indicatorId?: string; // HRIMS Indicator
 }
