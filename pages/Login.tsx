@@ -29,8 +29,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     return (
         <div className="login-container">
             <div className="login-box">
-                <div className="logo">HRIS</div>
-                <h1 className="sys-title">Human Rights Information System</h1>
+                <div className="logo">HRIMS</div>
+                <h1 className="sys-title">Human Rights Information Management System</h1>
                 <p className="sys-sub" style={{color: '#757575', marginBottom: '10px'}}>Islamic Republic of Pakistan</p>
                 <p className="urdu" style={{marginBottom: '30px'}}>اسلامی جمہوریہ پاکستان</p>
 
