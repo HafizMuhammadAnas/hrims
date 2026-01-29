@@ -22,7 +22,6 @@ const Header: React.FC<HeaderProps> = ({ user, onLogout, toggleSidebar, onNaviga
                     )}
                     <div>
                         <h1>Human Rights Information Management System</h1>
-                        <p style={{fontSize: '12px', opacity: 0.8}}>Islamic Republic of Pakistan</p>
                     </div>
                 </div>
 

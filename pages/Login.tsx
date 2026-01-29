@@ -31,8 +31,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="login-box">
                 <div className="logo">HRIMS</div>
                 <h1 className="sys-title">Human Rights Information Management System</h1>
-                <p className="sys-sub" style={{color: '#757575', marginBottom: '10px'}}>Islamic Republic of Pakistan</p>
-                <p className="urdu" style={{marginBottom: '30px'}}>اسلامی جمہوریہ پاکستان</p>
 
                 <form onSubmit={handleLogin} style={{textAlign: 'left'}}>
                     {error && (
