@@ -52,7 +52,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                 className="pl-10 w-full"
                                 required
                             />
-                            <UserIcon size={18} className="absolute left-3 top-3 text-gray-400" />
+                            {/* <UserIcon size={18} className="absolute left-3 top-3 text-gray-400" /> */}
                         </div>
                     </div>
                     <div className="form-field" style={{marginBottom: '20px'}}>
@@ -66,7 +66,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                 className="pl-10 w-full"
                                 required
                             />
-                            <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
+                            {/* <Lock size={18} className="absolute left-3 top-3 text-gray-400" /> */}
                         </div>
                     </div>
 
