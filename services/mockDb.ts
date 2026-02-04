@@ -6,9 +6,10 @@ import {
     INITIAL_COMPILED_RECORDS,
     INITIAL_CREATED_USERS,
     INITIAL_DEPARTMENT_TASKS,
+    INITIAL_VIOLATION_ENTRIES,
     DEFAULT_USERS
 } from '../constants';
-import { HRRequest, ProvinceResponse, CompiledRecord, FederalGroup, DepartmentTask, User, UserRole } from '../types';
+import { HRRequest, ProvinceResponse, CompiledRecord, FederalGroup, DepartmentTask, User, UserRole, ViolationEntry } from '../types';
 
 // Simple in-memory storage for the session
 class MockDatabase {
@@ -17,6 +18,7 @@ class MockDatabase {
     private responses: ProvinceResponse[] = [...INITIAL_RESPONSES];
     private compiledRecords: CompiledRecord[] = [...INITIAL_COMPILED_RECORDS];
     private departmentTasks: DepartmentTask[] = [...INITIAL_DEPARTMENT_TASKS]; 
+    private violationEntries: ViolationEntry[] = [...INITIAL_VIOLATION_ENTRIES];
     
     // Users: Combine Default Root Accounts + Created Users
     private users: User[] = [...DEFAULT_USERS, ...INITIAL_CREATED_USERS];
@@ -185,6 +187,48 @@ class MockDatabase {
                 submissionDate: new Date().toISOString().split('T')[0]
             } : t
         );
+    }
+
+    // --- Violation Entry Operations ---
+    getAllViolationEntries(filters?: { province?: string; startDate?: string; endDate?: string }): ViolationEntry[] {
+        let entries = [...this.violationEntries];
+        
+        if (filters) {
+            if (filters.province) {
+                entries = entries.filter(e => e.province === filters.province);
+            }
+            if (filters.startDate) {
+                entries = entries.filter(e => e.eventDate >= filters.startDate!);
+            }
+            if (filters.endDate) {
+                entries = entries.filter(e => e.eventDate <= filters.endDate!);
+            }
+        }
+        
+        return entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    getViolationEntryById(id: string): ViolationEntry | undefined {
+        return this.violationEntries.find(e => e.id === id);
+    }
+
+    addViolationEntry(entry: ViolationEntry) {
+        this.violationEntries.push(entry);
+    }
+
+    updateViolationEntry(id: string, updates: Partial<ViolationEntry>) {
+        this.violationEntries = this.violationEntries.map(e => 
+            e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e
+        );
+    }
+
+    deleteViolationEntry(id: string) {
+        this.violationEntries = this.violationEntries.filter(e => e.id !== id);
+    }
+
+    generateEntryNumber(): string {
+        const randomNum = Math.floor(Math.random() * 100000000);
+        return `EWS-${randomNum}`;
     }
 }
 

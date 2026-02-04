@@ -1,5 +1,5 @@
 
-import { Convention, Indicator, FederalGroup, HRRequest, ProvinceResponse, CompiledRecord, SDG, UPRStat, Department, User, UserRole, DepartmentTask } from './types';
+import { Convention, Indicator, FederalGroup, HRRequest, ProvinceResponse, CompiledRecord, SDG, UPRStat, Department, User, UserRole, DepartmentTask, ViolationEntry } from './types';
 
 export const CONVENTIONS: Convention[] = [
     {id:'icerd',title:'ICERD',icon:'📜',fullName:'International Convention on the Elimination of All Forms of Racial Discrimination',urdu:'نسلی امتیاز کی تمام اقسام کے خاتمے کا بین الاقوامی کنونشن',adopted:'1965',ratified:'1966',articles:'25',implementation:'72'},
@@ -128,5 +128,161 @@ export const INITIAL_DEPARTMENT_TASKS: DepartmentTask[] = [
         taskId: 'TSK-0099', reqId: 'REQ-2024-0150', province: 'Punjab', departmentId: 'SEC-HEALTH', departmentName: 'Department of Health', 
         status: 'submitted', assignedDate: '2024-01-20', submissionDate: '2024-01-25', 
         responseData: 'Women health centers operational in 36 districts.', attachmentUrl: 'http://health.punjab.gov.pk/women.pdf' 
+    }
+];
+
+// Initial Violation Entries
+export const INITIAL_VIOLATION_ENTRIES: ViolationEntry[] = [
+    {
+        id: 'violation-001',
+        entryNumber: 'EWS-12345678',
+        title: 'Journalist Harassment Case in Karachi',
+        eventDate: '2024-01-15',
+        eventTime: '14:30',
+        eventYear: '2024',
+        province: 'Sindh',
+        district: 'Karachi Central',
+        violationCategory: 'protection-life-liberty',
+        violationSubCategory: 'journalist',
+        monitoringStatus: 'in-progress',
+        description: 'A prominent journalist was harassed and threatened while covering a political rally. The incident occurred in broad daylight with multiple witnesses. The journalist has filed a complaint with the police, but no action has been taken yet. The case is being monitored by human rights organizations.',
+        createdAt: '2024-01-16T10:00:00Z'
+    },
+    {
+        id: 'violation-002',
+        entryNumber: 'EWS-23456789',
+        title: 'Gender-Based Violence Incident in Lahore',
+        eventDate: '2024-02-10',
+        eventTime: '18:45',
+        eventYear: '2024',
+        province: 'Punjab',
+        district: 'Lahore',
+        violationCategory: 'women-hrds',
+        violationSubCategory: 'gender-based-violence',
+        monitoringStatus: 'confirmed-verified',
+        description: 'A woman human rights defender was subjected to gender-based violence while conducting a field visit in a rural area. The incident was reported to local authorities and verified by independent sources. The victim has received medical assistance and legal support.',
+        createdAt: '2024-02-11T09:30:00Z'
+    },
+    {
+        id: 'violation-003',
+        entryNumber: 'EWS-34567890',
+        title: 'Cyber Harassment of Female Journalist',
+        eventDate: '2024-02-20',
+        eventTime: '22:00',
+        eventYear: '2024',
+        province: 'Punjab',
+        district: 'Islamabad',
+        violationCategory: 'women-hrds',
+        violationSubCategory: 'cyber-crime',
+        monitoringStatus: 'resolved',
+        description: 'A female journalist faced severe cyber harassment and online threats after publishing an investigative report. The case was reported to FIA cybercrime wing. The perpetrators were identified and legal action was taken. The case has been resolved with appropriate remedies provided.',
+        createdAt: '2024-02-21T11:15:00Z',
+        updatedAt: '2024-03-01T14:20:00Z'
+    },
+    {
+        id: 'violation-004',
+        entryNumber: 'EWS-45678901',
+        title: 'Workplace Harassment of HR Defender',
+        eventDate: '2024-03-05',
+        eventTime: '12:00',
+        eventYear: '2024',
+        province: 'Sindh',
+        district: 'Hyderabad',
+        violationCategory: 'women-hrds',
+        violationSubCategory: 'harassment-workplace',
+        monitoringStatus: 'in-progress',
+        description: 'A human rights defender working with an NGO faced workplace harassment from colleagues. The organization has initiated an internal inquiry. The case is ongoing and being monitored for appropriate resolution.',
+        createdAt: '2024-03-06T08:45:00Z'
+    },
+    {
+        id: 'violation-005',
+        entryNumber: 'EWS-56789012',
+        title: 'Torture Case of HR Defender in Custody',
+        eventDate: '2024-03-12',
+        eventTime: '16:20',
+        eventYear: '2024',
+        province: 'Khyber Pakhtunkhwa',
+        district: 'Peshawar',
+        violationCategory: 'protection-life-liberty',
+        violationSubCategory: 'torture-hrds-journalists',
+        monitoringStatus: 'confirmed-verified',
+        description: 'A human rights defender was allegedly tortured while in police custody. Medical examination confirmed injuries consistent with torture. The case has been verified and reported to relevant oversight bodies. Investigation is ongoing.',
+        createdAt: '2024-03-13T10:30:00Z'
+    },
+    {
+        id: 'violation-006',
+        entryNumber: 'EWS-67890123',
+        title: 'Blasphemy Case Against Minority Rights Activist',
+        eventDate: '2024-03-18',
+        eventTime: '10:15',
+        eventYear: '2024',
+        province: 'Punjab',
+        district: 'Multan',
+        violationCategory: 'religious-rights',
+        violationSubCategory: 'blasphemy',
+        monitoringStatus: 'not-confirmed',
+        description: 'A minority rights activist was accused of blasphemy. The case appears to be fabricated and politically motivated. The accused has been granted bail. The case is being monitored closely as it may be used to silence human rights defenders.',
+        createdAt: '2024-03-19T09:00:00Z'
+    },
+    {
+        id: 'violation-007',
+        entryNumber: 'EWS-78901234',
+        title: 'Transgender Rights Violation - GBV',
+        eventDate: '2024-03-25',
+        eventTime: '20:30',
+        eventYear: '2024',
+        province: 'Sindh',
+        district: 'Karachi East',
+        violationCategory: 'transgender-rights',
+        violationSubCategory: 'gbv',
+        monitoringStatus: 'in-progress',
+        description: 'A transgender individual was subjected to gender-based violence. The victim has filed a complaint with the police. Medical and legal assistance has been provided. The case is under investigation.',
+        createdAt: '2024-03-26T11:45:00Z'
+    },
+    {
+        id: 'violation-008',
+        entryNumber: 'EWS-89012345',
+        title: 'Minority Rights Violation - HR Defender',
+        eventDate: '2024-04-01',
+        eventTime: '15:00',
+        eventYear: '2024',
+        province: 'Punjab',
+        district: 'Faisalabad',
+        violationCategory: 'minority-rights',
+        violationSubCategory: 'minorities',
+        monitoringStatus: 'dismissed',
+        description: 'A human rights defender working on minority rights issues faced threats and intimidation. Initial investigation found insufficient evidence. The case has been dismissed but continues to be monitored for any further developments.',
+        createdAt: '2024-04-02T10:20:00Z',
+        updatedAt: '2024-04-15T16:30:00Z'
+    },
+    {
+        id: 'violation-009',
+        entryNumber: 'EWS-90123456',
+        title: 'Journalist Detained Without Charge',
+        eventDate: '2024-04-10',
+        eventTime: '09:00',
+        eventYear: '2024',
+        province: 'Balochistan',
+        district: 'Quetta',
+        violationCategory: 'protection-life-liberty',
+        violationSubCategory: 'rights-hrds-journalists-prison',
+        monitoringStatus: 'confirmed-verified',
+        description: 'A journalist was detained without formal charges for several days. The detention violated due process rights. The journalist was released after intervention by media rights organizations. The case has been verified and documented.',
+        createdAt: '2024-04-11T08:30:00Z'
+    },
+    {
+        id: 'violation-010',
+        entryNumber: 'EWS-01234567',
+        title: 'Sectarian Violence Against HR Defender',
+        eventDate: '2024-04-15',
+        eventTime: '19:45',
+        eventYear: '2024',
+        province: 'Punjab',
+        district: 'Rawalpindi',
+        violationCategory: 'religious-rights',
+        violationSubCategory: 'sectarian-violence',
+        monitoringStatus: 'in-progress',
+        description: 'A human rights defender was targeted in an incident of sectarian violence. The defender was providing legal aid to victims of religious persecution. The case is under investigation by law enforcement agencies.',
+        createdAt: '2024-04-16T12:00:00Z'
     }
 ];

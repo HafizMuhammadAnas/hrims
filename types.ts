@@ -136,3 +136,21 @@ export interface DepartmentTask {
     subcategoryId?: string; // HRIMS Subcategory
     indicatorId?: string; // HRIMS Indicator
 }
+
+// --- Violation Database Types ---
+export interface ViolationEntry {
+    id: string;
+    entryNumber: string; // e.g., "EWS-53453542"
+    title: string;
+    eventDate: string; // Date
+    eventTime?: string; // Time (e.g., "05:10pm")
+    eventYear: string; // Year
+    province: string; // Geographic Location - Province
+    district?: string; // Geographic Location - District
+    violationCategory: string; // Category ID
+    violationSubCategory?: string; // Sub-category ID (if applicable)
+    monitoringStatus: string; // Monitoring Status
+    description: string; // Rich text description
+    createdAt: string; // Entry creation date
+    updatedAt?: string; // Last update date
+}

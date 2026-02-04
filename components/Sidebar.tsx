@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, UserRole } from '../types';
-import { LayoutDashboard, Send, BarChart2, BookOpen, Inbox, Layers, FileCheck, Target, Globe, RefreshCcw, PieChart, History, Users, Activity, FileText, ClipboardList, List, UserCog, Building2 } from 'lucide-react';
+import { LayoutDashboard, Send, BarChart2, BookOpen, Inbox, Layers, FileCheck, Target, Globe, RefreshCcw, PieChart, History, Users, Activity, FileText, ClipboardList, List, UserCog, Building2, AlertTriangle } from 'lucide-react';
 
 interface SidebarProps {
     user: User;
@@ -108,6 +108,17 @@ const Sidebar: React.FC<SidebarProps> = ({ user, isOpen, currentPath, onNavigate
                 <div className="nav-section-title">Reports & Analysis</div>
                 <NavItem to="/report-generator" icon={PieChart} label="Report Generator" />
                 <NavItem to="/analysis" icon={BarChart2} label="Data Analysis" />
+
+                {/* Violation Database - Federal Only */}
+                {user.role === UserRole.FEDERAL_ADMIN && (
+                    <>
+                        <div className="nav-section-title">Violation Database</div>
+                        <div className="nav-sub">
+                             <NavItem to="/violation-dashboard" icon={LayoutDashboard} label="Dashboard" />
+                             <NavItem to="/violation-entries" icon={FileText} label="Violation Entries" />
+                        </div>
+                    </>
+                )}
 
                 {/* Knowledge Hub (Renamed) */}
                 <div className="nav-section-title">Knowledge Hub</div>

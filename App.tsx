@@ -17,6 +17,8 @@ import DepartmentHistory from './pages/department/DepartmentHistory';
 import { ConventionsInfo, IndicatorsInfo, SDGsInfo, UPRInfo } from './pages/Reports';
 import ReportGenerator from './pages/ReportGenerator';
 import Profile from './pages/Profile';
+import ViolationDashboard from './pages/violation/ViolationDashboard';
+import ViolationEntries from './pages/violation/ViolationEntries';
 import { User, UserRole } from './types';
 
 const App: React.FC = () => {
@@ -81,6 +83,10 @@ const App: React.FC = () => {
                 return <UserManagement user={{...user, province: 'Federal'}} />;
             case '/federal-history':
                 return <SubmissionHistory user={{...user, province: 'Federal'}} />;
+            case '/violation-dashboard':
+                return <ViolationDashboard />;
+            case '/violation-entries':
+                return <ViolationEntries />;
             
             // Provincial Routes
             case '/province-received':
