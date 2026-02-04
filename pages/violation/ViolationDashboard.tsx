@@ -18,6 +18,17 @@ const ViolationDashboard: React.FC = () => {
         endDate: ''
     });
 
+    // Individual Chart Filters
+    const [gbvFilters, setGbvFilters] = useState({
+        province: ''
+    });
+    const [provinceFilters, setProvinceFilters] = useState({
+        category: ''
+    });
+    const [monitoringFilters, setMonitoringFilters] = useState({
+        category: ''
+    });
+
     // View modes for each graph
     const [gbvViewMode, setGbvViewMode] = useState<ViewMode>('graph');
     const [provinceViewMode, setProvinceViewMode] = useState<ViewMode>('graph');
@@ -32,26 +43,32 @@ const ViolationDashboard: React.FC = () => {
 
     useEffect(() => {
         generateData();
-    }, [filters]);
+    }, [filters, gbvFilters, provinceFilters, monitoringFilters]);
 
     const generateData = () => {
         setLoading(true);
         
         // Simulate loading delay
         setTimeout(() => {
-            // Get filtered entries
-            const entries = db.getAllViolationEntries({
+            // Helper function to generate random dummy data
+            const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+            // Get filtered entries (combine global and chart-specific filters)
+            const allEntries = db.getAllViolationEntries({
                 province: filters.province || undefined,
                 startDate: filters.startDate || undefined,
                 endDate: filters.endDate || undefined
             });
 
-            // Helper function to generate random dummy data
-            const rand = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-            const hasRealData = entries.length > 0;
+            const hasRealData = allEntries.length > 0;
             const factor = filters.province ? 0.6 : 1; // Reduce numbers if filtering by province
 
             // Generate GBV Data (from Women HRDs category and Transgender Rights)
+            // Apply GBV-specific province filter
+            let gbvEntries = allEntries;
+            if (gbvFilters.province) {
+                gbvEntries = gbvEntries.filter(e => e.province === gbvFilters.province);
+            }
+
             const gbvCategories = ['women-hrds', 'transgender-rights'];
             const gbvSubCategories = [
                 { id: 'gender-based-violence', name: 'Gender Based Violence' },
@@ -61,26 +78,38 @@ const ViolationDashboard: React.FC = () => {
             ];
 
             const gbvCounts: { [key: string]: number } = {};
+            const hasGbvData = gbvEntries.length > 0;
+            const gbvFactor = gbvFilters.province ? 0.5 : factor;
+            
             gbvSubCategories.forEach(sub => {
-                const realCount = entries.filter(e => 
+                const realCount = gbvEntries.filter(e => 
                     gbvCategories.includes(e.violationCategory) && 
                     e.violationSubCategory === sub.id
                 ).length;
-                // Use real data if available, otherwise use dummy data
-                gbvCounts[sub.name] = hasRealData ? realCount : rand(15, 45) * factor;
+                // Always show data - use real if available, otherwise dummy
+                gbvCounts[sub.name] = hasGbvData && realCount > 0 ? realCount : rand(15, 45) * gbvFactor;
             });
 
-            setGbvData(
-                gbvSubCategories.map(sub => ({
+            // Ensure we always have data for GBV chart - always show dummy data
+            const gbvChartData = gbvSubCategories.map(sub => {
+                const count = gbvCounts[sub.name] || 0;
+                return {
                     name: sub.name,
-                    violations: gbvCounts[sub.name]
-                }))
-            );
+                    violations: count > 0 ? count : rand(15, 45) * gbvFactor
+                };
+            });
+            setGbvData(gbvChartData);
 
             // Generate Province Data
+            // Apply province-specific category filter
+            let provinceEntries = allEntries;
+            if (provinceFilters.category) {
+                provinceEntries = provinceEntries.filter(e => e.violationCategory === provinceFilters.category);
+            }
+
             const provinceCounts: { [key: string]: number } = {};
-            if (hasRealData) {
-                entries.forEach(entry => {
+            if (provinceEntries.length > 0) {
+                provinceEntries.forEach(entry => {
                     if (entry.province) {
                         provinceCounts[entry.province] = (provinceCounts[entry.province] || 0) + 1;
                     }
@@ -88,16 +117,26 @@ const ViolationDashboard: React.FC = () => {
             }
 
             // Generate dummy province data if no real data
-            setProvinceData(
-                PROVINCE_DISTRICTS.map(p => ({
+            const provinceFactor = provinceFilters.category ? 0.7 : factor;
+            const hasProvinceData = provinceEntries.length > 0;
+            
+            // Ensure we always have data for Province chart - always show dummy data
+            const provinceChartData = PROVINCE_DISTRICTS.map(p => {
+                const count = provinceCounts[p.name] || 0;
+                return {
                     name: p.name,
-                    violations: hasRealData 
-                        ? (provinceCounts[p.name] || 0)
-                        : rand(10, 50) * factor
-                }))
-            );
+                    violations: count > 0 ? count : rand(10, 50) * provinceFactor
+                };
+            });
+            setProvinceData(provinceChartData);
 
             // Generate Monitoring Status Data
+            // Apply monitoring-specific category filter (all categories)
+            let monitoringEntries = allEntries;
+            if (monitoringFilters.category) {
+                monitoringEntries = monitoringEntries.filter(e => e.violationCategory === monitoringFilters.category);
+            }
+
             const monitoringStatuses = [
                 { value: 'confirmed-verified', label: 'Confirmed/Verified' },
                 { value: 'dismissed', label: 'Dismissed' },
@@ -107,22 +146,26 @@ const ViolationDashboard: React.FC = () => {
             ];
 
             const monitoringCounts: { [key: string]: number } = {};
-            if (hasRealData) {
-                entries.forEach(entry => {
+            if (monitoringEntries.length > 0) {
+                monitoringEntries.forEach(entry => {
                     if (entry.monitoringStatus) {
                         monitoringCounts[entry.monitoringStatus] = (monitoringCounts[entry.monitoringStatus] || 0) + 1;
                     }
                 });
             }
 
-            setMonitoringData(
-                monitoringStatuses.map(status => ({
+            const monitoringFactor = monitoringFilters.category ? 0.7 : factor;
+            const hasMonitoringData = monitoringEntries.length > 0;
+            
+            // Ensure we always have data for Monitoring chart - always show dummy data
+            const monitoringChartData = monitoringStatuses.map(status => {
+                const count = monitoringCounts[status.value] || 0;
+                return {
                     name: status.label,
-                    violations: hasRealData
-                        ? (monitoringCounts[status.value] || 0)
-                        : rand(8, 35) * factor
-                }))
-            );
+                    violations: count > 0 ? count : rand(8, 35) * monitoringFactor
+                };
+            });
+            setMonitoringData(monitoringChartData);
 
             setLoading(false);
         }, 300);
@@ -141,23 +184,28 @@ const ViolationDashboard: React.FC = () => {
         id, 
         children, 
         viewMode, 
-        onViewModeChange 
+        onViewModeChange,
+        chartFilter,
+        onFilterChange
     }: { 
         title: string, 
         id: string, 
         children: React.ReactNode, 
         viewMode: ViewMode,
-        onViewModeChange: (mode: ViewMode) => void
+        onViewModeChange: (mode: ViewMode) => void,
+        chartFilter?: React.ReactNode,
+        onFilterChange?: () => void
     }) => (
-        <div id={id} className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 card relative group" style={{minHeight: '350px', height: 'auto', display: 'flex', flexDirection: 'column'}}>
-            <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-3">
-                <h3 className="text-base md:text-lg font-bold text-gray-700">{title}</h3>
+        <div id={id} className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-200 card relative group w-full" style={{minHeight: '500px', display: 'flex', flexDirection: 'column'}}>
+            {/* Header Section */}
+            <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4 pb-4 border-b border-gray-200">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-800">{title}</h3>
                 
                 {/* Graph/Table Toggle */}
-                <div className="flex gap-2 bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+                <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
                     <button
                         onClick={() => onViewModeChange('graph')}
-                        className={`flex-1 sm:flex-none px-3 py-1 rounded text-xs md:text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                             viewMode === 'graph' 
                                 ? 'bg-[#01411C] text-white' 
                                 : 'text-gray-600 hover:bg-gray-200'
@@ -167,7 +215,7 @@ const ViolationDashboard: React.FC = () => {
                     </button>
                     <button
                         onClick={() => onViewModeChange('table')}
-                        className={`flex-1 sm:flex-none px-3 py-1 rounded text-xs md:text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
                             viewMode === 'table' 
                                 ? 'bg-[#01411C] text-white' 
                                 : 'text-gray-600 hover:bg-gray-200'
@@ -177,13 +225,26 @@ const ViolationDashboard: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Chart-specific Filter */}
+            {chartFilter && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-300">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Filter size={16} className="text-[#01411C]" />
+                        <span className="text-sm font-bold text-gray-700 uppercase">Chart Filter</span>
+                    </div>
+                    <div className="max-w-md">
+                        {chartFilter}
+                    </div>
+                </div>
+            )}
             
             {loading ? (
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#01411C]"></div>
+                <div className="flex-1 flex items-center justify-center" style={{height: '450px'}}>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#01411C]"></div>
                 </div>
             ) : (
-                <div className="flex-1 min-h-0">
+                <div className="flex-1" style={{height: '450px', width: '100%'}}>
                     {children}
                 </div>
             )}
@@ -289,25 +350,57 @@ const ViolationDashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+            {/* Charts Grid - One by One */}
+            <div className="space-y-6">
                 {/* GBV Violations Chart */}
                 <ChartCard 
                     title="GBV Violations" 
                     id="chart-gbv"
                     viewMode={gbvViewMode}
                     onViewModeChange={setGbvViewMode}
+                    chartFilter={
+                        <div className="form-field">
+                            <label className="text-sm font-semibold text-gray-700 mb-2 block">Filter by Province / صوبہ</label>
+                            <select 
+                                value={gbvFilters.province}
+                                onChange={e => setGbvFilters({...gbvFilters, province: e.target.value})}
+                                className="w-full p-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#01411C] transition-colors"
+                            >
+                                <option value="">All Provinces / تمام صوبے</option>
+                                {PROVINCE_DISTRICTS.map(p => (
+                                    <option key={p.id} value={p.name}>{p.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    }
                 >
                     {gbvViewMode === 'graph' ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={gbvData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="violations" fill="#FF5722" radius={[4, 4, 0, 0]} name="Number of Violations" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        gbvData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={450}>
+                                <BarChart data={gbvData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        angle={-45} 
+                                        textAnchor="end" 
+                                        height={120} 
+                                        tick={{fontSize: 14, fill: '#374151'}}
+                                        interval={0}
+                                    />
+                                    <YAxis 
+                                        label={{ value: 'Number of Violations', angle: -90, position: 'insideLeft', style: {fontSize: 14, fill: '#374151'} }}
+                                        tick={{fontSize: 14, fill: '#374151'}}
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
+                                        cursor={{fill: 'rgba(255, 87, 34, 0.1)'}}
+                                    />
+                                    <Bar dataKey="violations" fill="#FF5722" radius={[4, 4, 0, 0]} name="Number of Violations" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-gray-500">Loading chart data...</div>
+                        )
                     ) : (
                         <TableView 
                             data={gbvData} 
@@ -325,17 +418,49 @@ const ViolationDashboard: React.FC = () => {
                     id="chart-provinces"
                     viewMode={provinceViewMode}
                     onViewModeChange={setProvinceViewMode}
+                    chartFilter={
+                        <div className="form-field">
+                            <label className="text-sm font-semibold text-gray-700 mb-2 block">Filter by Category / زمرہ</label>
+                            <select 
+                                value={provinceFilters.category}
+                                onChange={e => setProvinceFilters({...provinceFilters, category: e.target.value})}
+                                className="w-full p-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#01411C] transition-colors"
+                            >
+                                <option value="">All Categories / تمام زمرے</option>
+                                {VIOLATION_CATEGORIES.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    }
                 >
                     {provinceViewMode === 'graph' ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={provinceData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="violations" fill="#01411C" radius={[4, 4, 0, 0]} name="Number of Violations" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        provinceData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={450}>
+                                <BarChart data={provinceData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        angle={-45} 
+                                        textAnchor="end" 
+                                        height={120} 
+                                        tick={{fontSize: 14, fill: '#374151'}}
+                                        interval={0}
+                                    />
+                                    <YAxis 
+                                        label={{ value: 'Number of Violations', angle: -90, position: 'insideLeft', style: {fontSize: 14, fill: '#374151'} }}
+                                        tick={{fontSize: 14, fill: '#374151'}}
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
+                                        cursor={{fill: 'rgba(1, 65, 28, 0.1)'}}
+                                    />
+                                    <Bar dataKey="violations" fill="#01411C" radius={[4, 4, 0, 0]} name="Number of Violations" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-gray-500">Loading chart data...</div>
+                        )
                     ) : (
                         <TableView 
                             data={provinceData} 
@@ -349,21 +474,53 @@ const ViolationDashboard: React.FC = () => {
 
                 {/* Monitoring Status Chart */}
                 <ChartCard 
-                    title="Monitoring Status" 
+                    title="Monitoring Status (All Categories)" 
                     id="chart-monitoring"
                     viewMode={monitoringViewMode}
                     onViewModeChange={setMonitoringViewMode}
+                    chartFilter={
+                        <div className="form-field">
+                            <label className="text-sm font-semibold text-gray-700 mb-2 block">Filter by Category / زمرہ</label>
+                            <select 
+                                value={monitoringFilters.category}
+                                onChange={e => setMonitoringFilters({...monitoringFilters, category: e.target.value})}
+                                className="w-full p-3 border-2 border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#01411C] transition-colors"
+                            >
+                                <option value="">All Categories / تمام زمرے</option>
+                                {VIOLATION_CATEGORIES.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    }
                 >
                     {monitoringViewMode === 'graph' ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={monitoringData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{fontSize: 10}} />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="violations" fill="#1E88E5" radius={[4, 4, 0, 0]} name="Number of Violations" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        monitoringData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={450}>
+                                <BarChart data={monitoringData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        angle={-45} 
+                                        textAnchor="end" 
+                                        height={120} 
+                                        tick={{fontSize: 14, fill: '#374151'}}
+                                        interval={0}
+                                    />
+                                    <YAxis 
+                                        label={{ value: 'Number of Violations', angle: -90, position: 'insideLeft', style: {fontSize: 14, fill: '#374151'} }}
+                                        tick={{fontSize: 14, fill: '#374151'}}
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
+                                        cursor={{fill: 'rgba(30, 136, 229, 0.1)'}}
+                                    />
+                                    <Bar dataKey="violations" fill="#1E88E5" radius={[4, 4, 0, 0]} name="Number of Violations" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-gray-500">Loading chart data...</div>
+                        )
                     ) : (
                         <TableView 
                             data={monitoringData} 
