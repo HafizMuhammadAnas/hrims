@@ -3,7 +3,7 @@ import { db } from '../../services/mockDb';
 import { ViolationEntry } from '../../types';
 import { PROVINCE_DISTRICTS, getDistrictsByProvince } from '../../provinceDistricts';
 import { VIOLATION_CATEGORIES, getSubCategoriesByCategory, getIndicatorsBySubCategory, MONITORING_STATUS_OPTIONS } from '../../violationCategories';
-import { Plus, Edit, Trash2, Eye, X, Calendar, Clock, MapPin, AlertTriangle, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, X, Calendar, Clock, MapPin, AlertTriangle, FileText, CheckCircle } from 'lucide-react';
 
 const ViolationEntries: React.FC = () => {
     const [entries, setEntries] = useState<ViolationEntry[]>([]);
@@ -506,13 +506,13 @@ const ViolationEntries: React.FC = () => {
                         <table style={{minWidth: '900px'}}>
                             <thead>
                                 <tr>
-                                    <th>Entry Number</th>
-                                    <th>Title</th>
-                                    <th>Event Date</th>
-                                    <th>Province</th>
-                                    <th>Category</th>
-                                    <th>Monitoring Status</th>
-                                    <th>Actions</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Entry Number</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Title</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Event Date</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Province</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Category</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Monitoring Status</th>
+                                    <th style={{backgroundColor: '#1E40AF', color: '#fff'}}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>

@@ -169,14 +169,14 @@ const ViolationDashboard: React.FC = () => {
                 categoryCounts[category.name] = realCount;
             });
 
-            // Pastel color palette for main categories - 6 distinct colors
+            // Vibrant color palette for main categories - 6 distinct colors (matching reference style)
             const mainCategoryColors = [
-                '#FFB3BA', // Pastel Pink
-                '#BAE1FF', // Pastel Sky Blue
-                '#BAFFC9', // Pastel Mint Green
-                '#FFDFBA', // Pastel Peach
-                '#E6B3FF', // Pastel Lavender
-                '#FFFFBA'  // Pastel Yellow
+                '#1E40AF', // Dark Blue
+                '#0D9488', // Teal
+                '#7C3AED', // Purple
+                '#F97316', // Orange
+                '#16A34A', // Green
+                '#DC2626'  // Red
             ];
             
             // Generate chart data - always show all 6 main categories with their exact names
@@ -225,31 +225,31 @@ const ViolationDashboard: React.FC = () => {
                 console.warn(`Expected 23 indicators but found ${genderBasedViolationIndicators.length}`);
             }
             
-            // Pastel color palette for different bars - 23 distinct colors
-            const pastelColors = [
-                '#FFB3BA', // Pastel Pink
-                '#BAFFC9', // Pastel Mint Green
-                '#BAE1FF', // Pastel Sky Blue
-                '#FFFFBA', // Pastel Yellow
-                '#FFDFBA', // Pastel Peach
-                '#E6B3FF', // Pastel Lavender
-                '#B3FFE6', // Pastel Aqua
-                '#FFB3E6', // Pastel Rose
-                '#B3D9FF', // Pastel Light Blue
-                '#FFE6B3', // Pastel Cream
-                '#D4A5FF', // Pastel Purple
-                '#A5FFD4', // Pastel Seafoam
-                '#FFA5D4', // Pastel Magenta
-                '#A5D4FF', // Pastel Blue
-                '#FFD4A5', // Pastel Orange
-                '#C4B5FF', // Pastel Periwinkle
-                '#B5FFC4', // Pastel Green
-                '#FFB5C4', // Pastel Coral
-                '#B5C4FF', // Pastel Cornflower
-                '#FFC4B5', // Pastel Salmon
-                '#B3B3FF', // Pastel Indigo
-                '#B3FFB3', // Pastel Lime
-                '#FFB3B3'  // Pastel Red
+            // Vibrant color palette for different bars - 23 distinct colors (matching reference style)
+            const vibrantColors = [
+                '#1E40AF', // Dark Blue
+                '#0D9488', // Teal
+                '#7C3AED', // Purple
+                '#F97316', // Orange
+                '#16A34A', // Green
+                '#DC2626', // Red
+                '#2563EB', // Blue
+                '#14B8A6', // Cyan
+                '#8B5CF6', // Violet
+                '#FB923C', // Orange Light
+                '#22C55E', // Green Light
+                '#EF4444', // Red Light
+                '#1E3A8A', // Navy Blue
+                '#0891B2', // Sky Blue
+                '#6D28D9', // Deep Purple
+                '#EA580C', // Deep Orange
+                '#15803D', // Forest Green
+                '#B91C1C', // Dark Red
+                '#3B82F6', // Bright Blue
+                '#10B981', // Emerald
+                '#A855F7', // Bright Purple
+                '#F59E0B', // Amber
+                '#6366F1'  // Indigo
             ];
             
             // Check if any filters are applied
@@ -277,7 +277,7 @@ const ViolationDashboard: React.FC = () => {
                     return {
                         name: indicator.name || `Indicator ${index + 1}`,
                         violations: realCount,
-                        color: pastelColors[index % pastelColors.length]
+                        color: vibrantColors[index % vibrantColors.length]
                     };
                 } else {
                     // No filters - show varied dummy data representing overall strength
@@ -291,7 +291,7 @@ const ViolationDashboard: React.FC = () => {
                     return {
                         name: indicator.name || `Indicator ${index + 1}`,
                         violations: Math.floor(dummyValue),
-                        color: pastelColors[index % pastelColors.length]
+                        color: vibrantColors[index % vibrantColors.length]
                     };
                 }
             });
@@ -365,11 +365,11 @@ const ViolationDashboard: React.FC = () => {
             }
 
             const monitoringStatuses = [
-                { value: 'confirmed-verified', label: 'Confirmed/Verified', color: '#7FC4D9' }, // Darker Pastel Blue
-                { value: 'resolved', label: 'Resolved', color: '#A5D4A6' }, // Darker Pastel Green
-                { value: 'in-progress', label: 'In Progress', color: '#FFE082' }, // Darker Pastel Yellow
-                { value: 'dismissed', label: 'Dismissed', color: '#F19BB8' }, // Darker Pastel Pink
-                { value: 'not-confirmed', label: 'Not Confirmed', color: '#81D4FA' } // Darker Pastel Light Blue
+                { value: 'confirmed-verified', label: 'Confirmed/Verified', color: '#2563EB' }, // Vibrant Blue
+                { value: 'resolved', label: 'Resolved', color: '#16A34A' }, // Vibrant Green
+                { value: 'in-progress', label: 'In Progress', color: '#F59E0B' }, // Vibrant Amber
+                { value: 'dismissed', label: 'Dismissed', color: '#DC2626' }, // Vibrant Red
+                { value: 'not-confirmed', label: 'Not Confirmed', color: '#0D9488' } // Vibrant Teal
             ];
 
             const monitoringCounts: { [key: string]: number } = {};
@@ -768,11 +768,11 @@ const ViolationDashboard: React.FC = () => {
                                     />
                                     <Tooltip 
                                         contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
-                                        cursor={{fill: 'rgba(255, 182, 193, 0.2)'}}
+                                        cursor={{fill: 'rgba(30, 64, 175, 0.1)'}}
                                     />
                                     <Bar dataKey="violations" radius={[0, 4, 4, 0]} name="Number of Violations">
                                         {gbvData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color || '#FFB3BA'} />
+                                            <Cell key={`cell-${index}`} fill={entry.color || '#1E40AF'} />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -862,7 +862,7 @@ const ViolationDashboard: React.FC = () => {
                                     />
                                     <Tooltip 
                                         contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
-                                        cursor={{fill: 'rgba(221, 160, 221, 0.1)'}}
+                                        cursor={{fill: 'rgba(30, 64, 175, 0.1)'}}
                                         formatter={(value: number, payload: any) => {
                                             const percentage = payload && payload.payload ? payload.payload.percentage : (payload?.percentage || '0.0');
                                             return [`${value} (${percentage}%)`, 'Violations'];
@@ -892,7 +892,7 @@ const ViolationDashboard: React.FC = () => {
                                         }}
                                     >
                                         {genderBasedViolationData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color || '#DDA0DD'} />
+                                            <Cell key={`cell-${index}`} fill={entry.color || '#1E40AF'} />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -957,9 +957,9 @@ const ViolationDashboard: React.FC = () => {
                                     />
                                     <Tooltip 
                                         contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
-                                        cursor={{fill: 'rgba(176, 224, 230, 0.2)'}}
+                                        cursor={{fill: 'rgba(30, 64, 175, 0.1)'}}
                                     />
-                                    <Bar dataKey="violations" fill="#B0E0E6" radius={[4, 4, 0, 0]} name="Number of Violations" />
+                                    <Bar dataKey="violations" fill="#1E40AF" radius={[4, 4, 0, 0]} name="Number of Violations" />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
@@ -1051,11 +1051,11 @@ const ViolationDashboard: React.FC = () => {
                                                 label={({name, percent}) => `${(percent * 100).toFixed(1)}%`}
                                                 outerRadius={140}
                                                 innerRadius={50}
-                                                fill="#DDA0DD"
+                                                fill="#1E40AF"
                                                 dataKey="value"
                                             >
                                                 {monitoringData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color || '#DDA0DD'} />
+                                                    <Cell key={`cell-${index}`} fill={entry.color || '#1E40AF'} />
                                                 ))}
                                             </Pie>
                                             <Tooltip 
