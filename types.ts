@@ -149,6 +149,7 @@ export interface ViolationEntry {
     district?: string; // Geographic Location - District
     violationCategory: string; // Category ID
     violationSubCategory?: string; // Sub-category ID (if applicable)
+    violationIndicator?: string; // Indicator ID (third layer, if applicable)
     monitoringStatus: string; // Monitoring Status
     description: string; // Rich text description
     createdAt: string; // Entry creation date

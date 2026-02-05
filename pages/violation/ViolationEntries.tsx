@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../../services/mockDb';
 import { ViolationEntry } from '../../types';
 import { PROVINCE_DISTRICTS, getDistrictsByProvince } from '../../provinceDistricts';
-import { VIOLATION_CATEGORIES, getSubCategoriesByCategory, MONITORING_STATUS_OPTIONS } from '../../violationCategories';
+import { VIOLATION_CATEGORIES, getSubCategoriesByCategory, getIndicatorsBySubCategory, MONITORING_STATUS_OPTIONS } from '../../violationCategories';
 import { Plus, Edit, Trash2, Eye, X, Calendar, Clock, MapPin, AlertTriangle, FileText } from 'lucide-react';
 
 const ViolationEntries: React.FC = () => {
@@ -22,6 +22,7 @@ const ViolationEntries: React.FC = () => {
         district: '',
         violationCategory: '',
         violationSubCategory: '',
+        violationIndicator: '',
         monitoringStatus: '',
         description: ''
     });
@@ -65,6 +66,7 @@ const ViolationEntries: React.FC = () => {
             district: entry.district || '',
             violationCategory: entry.violationCategory,
             violationSubCategory: entry.violationSubCategory || '',
+            violationIndicator: entry.violationIndicator || '',
             monitoringStatus: entry.monitoringStatus,
             description: entry.description
         });
@@ -118,6 +120,9 @@ const ViolationEntries: React.FC = () => {
     const availableSubCategories = formData.violationCategory 
         ? getSubCategoriesByCategory(formData.violationCategory) 
         : [];
+    const availableIndicators = formData.violationCategory && formData.violationSubCategory
+        ? getIndicatorsBySubCategory(formData.violationCategory, formData.violationSubCategory)
+        : [];
 
     const getCategoryName = (categoryId: string) => {
         const category = VIOLATION_CATEGORIES.find(c => c.id === categoryId);
@@ -129,6 +134,15 @@ const ViolationEntries: React.FC = () => {
         if (!category) return subCategoryId;
         const subCategory = category.subCategories.find(sc => sc.id === subCategoryId);
         return subCategory ? subCategory.name : subCategoryId;
+    };
+
+    const getIndicatorName = (categoryId: string, subCategoryId: string, indicatorId: string) => {
+        const category = VIOLATION_CATEGORIES.find(c => c.id === categoryId);
+        if (!category) return indicatorId;
+        const subCategory = category.subCategories.find(sc => sc.id === subCategoryId);
+        if (!subCategory || !subCategory.indicators) return indicatorId;
+        const indicator = subCategory.indicators.find(i => i.id === indicatorId);
+        return indicator ? indicator.name : indicatorId;
     };
 
     const getMonitoringStatusLabel = (status: string) => {
@@ -174,7 +188,7 @@ const ViolationEntries: React.FC = () => {
                     {/* Event/Case Date */}
                     <div className="form-row">
                         <div className="form-field">
-                            <label>Event/Case Date ~ واقعہ / کیس کی تاریخ *</label>
+                            <label>Date*</label>
                             <input 
                                 type="date" 
                                 value={formData.eventDate}
@@ -242,7 +256,7 @@ const ViolationEntries: React.FC = () => {
                             <select 
                                 value={formData.violationCategory}
                                 onChange={e => {
-                                    setFormData({...formData, violationCategory: e.target.value, violationSubCategory: ''});
+                                    setFormData({...formData, violationCategory: e.target.value, violationSubCategory: '', violationIndicator: ''});
                                 }}
                                 required
                             >
@@ -256,12 +270,27 @@ const ViolationEntries: React.FC = () => {
                             <label>Violation Sub-Category</label>
                             <select 
                                 value={formData.violationSubCategory}
-                                onChange={e => setFormData({...formData, violationSubCategory: e.target.value})}
+                                onChange={e => {
+                                    setFormData({...formData, violationSubCategory: e.target.value, violationIndicator: ''});
+                                }}
                                 disabled={!formData.violationCategory || availableSubCategories.length === 0}
                             >
                                 <option value="">- None -</option>
                                 {availableSubCategories.map(sub => (
                                     <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-field">
+                            <label>Violation Indicator</label>
+                            <select 
+                                value={formData.violationIndicator}
+                                onChange={e => setFormData({...formData, violationIndicator: e.target.value})}
+                                disabled={!formData.violationSubCategory || availableIndicators.length === 0}
+                            >
+                                <option value="">- None -</option>
+                                {availableIndicators.map(ind => (
+                                    <option key={ind.id} value={ind.id}>{ind.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -375,6 +404,12 @@ const ViolationEntries: React.FC = () => {
                                     <>
                                         <div className="detail-label">Sub-Category</div>
                                         <div className="detail-value">{getSubCategoryName(viewingEntry.violationCategory, viewingEntry.violationSubCategory)}</div>
+                                    </>
+                                )}
+                                {viewingEntry.violationIndicator && (
+                                    <>
+                                        <div className="detail-label">Indicator</div>
+                                        <div className="detail-value">{getIndicatorName(viewingEntry.violationCategory, viewingEntry.violationSubCategory || '', viewingEntry.violationIndicator)}</div>
                                     </>
                                 )}
                                 <div className="detail-label">Monitoring Status</div>
