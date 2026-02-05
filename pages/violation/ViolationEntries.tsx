@@ -429,11 +429,69 @@ const ViolationEntries: React.FC = () => {
 
     return (
         <div className="table-container">
-            <div className="table-header">
-                <h2>Violation Entries</h2>
-                <button onClick={handleAddNew} className="btn btn-primary">
-                    <Plus size={16} /> Add Entry
+            <div className="table-header" style={{marginBottom: '24px'}}>
+                <div>
+                    <h2 style={{fontSize: '24px', fontWeight: 'bold', color: '#01411C', marginBottom: '4px'}}>Violation Entries</h2>
+                    <p style={{fontSize: '14px', color: '#666', margin: 0}}>Manage and track all violation entries in the database</p>
+                </div>
+                <button 
+                    onClick={handleAddNew} 
+                    className="btn btn-primary"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px 24px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 4px rgba(1, 65, 28, 0.2)',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    <Plus size={18} /> Add New Entry
                 </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600 mb-1">Total Entries</p>
+                            <p className="text-2xl font-bold text-[#01411C]">{entries.length}</p>
+                        </div>
+                        <div className="bg-[#01411C]/10 p-3 rounded-lg">
+                            <FileText className="text-[#01411C]" size={24} />
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600 mb-1">Resolved</p>
+                            <p className="text-2xl font-bold text-green-600">
+                                {entries.filter(e => e.monitoringStatus === 'resolved').length}
+                            </p>
+                        </div>
+                        <div className="bg-green-100 p-3 rounded-lg">
+                            <CheckCircle className="text-green-600" size={24} />
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm text-gray-600 mb-1">In Progress</p>
+                            <p className="text-2xl font-bold text-yellow-600">
+                                {entries.filter(e => e.monitoringStatus === 'in-progress').length}
+                            </p>
+                        </div>
+                        <div className="bg-yellow-100 p-3 rounded-lg">
+                            <Clock className="text-yellow-600" size={24} />
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {entries.length === 0 ? (

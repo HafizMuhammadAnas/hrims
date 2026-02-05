@@ -167,22 +167,6 @@ export const PROVINCE_DISTRICTS: Province[] = [
             { id: 'ziarat', name: 'Ziarat' },
             { id: 'sherani', name: 'Sherani' }
         ]
-    },
-    {
-        id: 'gb',
-        name: 'Gilgit-Baltistan',
-        districts: [
-            { id: 'gilgit', name: 'Gilgit' },
-            { id: 'skardu', name: 'Skardu' },
-            { id: 'hunza', name: 'Hunza' },
-            { id: 'nagar', name: 'Nagar' },
-            { id: 'ghizer', name: 'Ghizer' },
-            { id: 'astore', name: 'Astore' },
-            { id: 'diamer', name: 'Diamer' },
-            { id: 'ghanche', name: 'Ghanche' },
-            { id: 'shigar', name: 'Shigar' },
-            { id: 'kharmang', name: 'Kharmang' }
-        ]
     }
 ];
 

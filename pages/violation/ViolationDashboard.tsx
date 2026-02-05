@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell
+    PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
 } from 'recharts';
-import { Filter, RefreshCcw, Calendar } from 'lucide-react';
+import { Filter, RefreshCcw, Calendar, TrendingUp, AlertCircle, FileText, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { db } from '../../services/mockDb';
 import { ViolationEntry } from '../../types';
 import { VIOLATION_CATEGORIES, getIndicatorsBySubCategory, MONITORING_STATUS_OPTIONS } from '../../violationCategories';
@@ -48,6 +48,15 @@ const ViolationDashboard: React.FC = () => {
     const [genderBasedViolationData, setGenderBasedViolationData] = useState<any[]>([]);
     const [provinceData, setProvinceData] = useState<any[]>([]);
     const [monitoringData, setMonitoringData] = useState<any[]>([]);
+    const [trendData, setTrendData] = useState<any[]>([]);
+    
+    // Summary statistics
+    const [summaryStats, setSummaryStats] = useState({
+        totalViolations: 0,
+        byCategory: 0,
+        byStatus: {} as { [key: string]: number },
+        recentEntries: 0
+    });
 
     const [loading, setLoading] = useState(false);
     const scrollPositionRef = useRef<number>(0);
@@ -97,6 +106,49 @@ const ViolationDashboard: React.FC = () => {
             const hasRealData = allEntries.length > 0;
             const factor = filters.province ? 0.6 : 1; // Reduce numbers if filtering by province
 
+            // Calculate summary statistics
+            const totalViolationsCount = allEntries.length;
+            const categoryCount = new Set(allEntries.map(e => e.violationCategory)).size;
+            const statusCounts: { [key: string]: number } = {};
+            allEntries.forEach(entry => {
+                if (entry.monitoringStatus) {
+                    statusCounts[entry.monitoringStatus] = (statusCounts[entry.monitoringStatus] || 0) + 1;
+                }
+            });
+            // Count recent entries (last 30 days)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const recentEntries = allEntries.filter(e => {
+                const entryDate = new Date(e.eventDate);
+                return entryDate >= thirtyDaysAgo;
+            }).length;
+
+            setSummaryStats({
+                totalViolations: totalViolationsCount || rand(150, 300),
+                byCategory: categoryCount || 6,
+                byStatus: statusCounts,
+                recentEntries: recentEntries || rand(10, 50)
+            });
+
+            // Generate trend data (monthly violations over last 6 months)
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            const trendChartData = months.map((month, index) => {
+                // Count real violations for this month if available
+                const monthEntries = allEntries.filter(e => {
+                    const entryDate = new Date(e.eventDate);
+                    const monthIndex = entryDate.getMonth();
+                    return monthIndex === index;
+                });
+                const realCount = monthEntries.length;
+                
+                // Use real data if available, otherwise generate dummy data
+                return {
+                    month,
+                    violations: realCount > 0 ? realCount : rand(15, 45) * factor
+                };
+            });
+            setTrendData(trendChartData);
+
             // Generate Main Categories Data - Show strength of all 6 main categories
             // Apply province filter if selected
             let categoryEntries = allEntries;
@@ -117,6 +169,16 @@ const ViolationDashboard: React.FC = () => {
                 categoryCounts[category.name] = realCount;
             });
 
+            // Pastel color palette for main categories - 6 distinct colors
+            const mainCategoryColors = [
+                '#FFB3BA', // Pastel Pink
+                '#BAE1FF', // Pastel Sky Blue
+                '#BAFFC9', // Pastel Mint Green
+                '#FFDFBA', // Pastel Peach
+                '#E6B3FF', // Pastel Lavender
+                '#FFFFBA'  // Pastel Yellow
+            ];
+            
             // Generate chart data - always show all 6 main categories with their exact names
             // Use real data if available, otherwise varied dummy data
             const gbvChartData = VIOLATION_CATEGORIES.map((category, index) => {
@@ -127,7 +189,8 @@ const ViolationDashboard: React.FC = () => {
                 if (hasCategoryData && realCount > 0) {
                     return {
                         name: category.name, // Exact name from VIOLATION_CATEGORIES
-                        violations: realCount
+                        violations: realCount,
+                        color: mainCategoryColors[index % mainCategoryColors.length]
                     };
                 } else {
                     // Generate varied dummy data for better visualization
@@ -137,7 +200,8 @@ const ViolationDashboard: React.FC = () => {
                     
                     return {
                         name: category.name, // Exact name from VIOLATION_CATEGORIES
-                        violations: Math.floor(dummyValue)
+                        violations: Math.floor(dummyValue),
+                        color: mainCategoryColors[index % mainCategoryColors.length]
                     };
                 }
             });
@@ -156,11 +220,49 @@ const ViolationDashboard: React.FC = () => {
             // Get the 23 indicators from Gender Based Violence subcategory
             const genderBasedViolationIndicators = getIndicatorsBySubCategory('women-hrds', 'gender-based-violence');
             
+            // Ensure we have exactly 23 indicators
+            if (genderBasedViolationIndicators.length !== 23) {
+                console.warn(`Expected 23 indicators but found ${genderBasedViolationIndicators.length}`);
+            }
+            
+            // Pastel color palette for different bars - 23 distinct colors
+            const pastelColors = [
+                '#FFB3BA', // Pastel Pink
+                '#BAFFC9', // Pastel Mint Green
+                '#BAE1FF', // Pastel Sky Blue
+                '#FFFFBA', // Pastel Yellow
+                '#FFDFBA', // Pastel Peach
+                '#E6B3FF', // Pastel Lavender
+                '#B3FFE6', // Pastel Aqua
+                '#FFB3E6', // Pastel Rose
+                '#B3D9FF', // Pastel Light Blue
+                '#FFE6B3', // Pastel Cream
+                '#D4A5FF', // Pastel Purple
+                '#A5FFD4', // Pastel Seafoam
+                '#FFA5D4', // Pastel Magenta
+                '#A5D4FF', // Pastel Blue
+                '#FFD4A5', // Pastel Orange
+                '#C4B5FF', // Pastel Periwinkle
+                '#B5FFC4', // Pastel Green
+                '#FFB5C4', // Pastel Coral
+                '#B5C4FF', // Pastel Cornflower
+                '#FFC4B5', // Pastel Salmon
+                '#B3B3FF', // Pastel Indigo
+                '#B3FFB3', // Pastel Lime
+                '#FFB3B3'  // Pastel Red
+            ];
+            
             // Check if any filters are applied
             const hasFilters = genderBasedViolationFilters.province || genderBasedViolationFilters.district;
             
             // Count real violations for each indicator from the filtered entries
-            const genderBasedViolationChartData = genderBasedViolationIndicators.map((indicator, index) => {
+            // Ensure ALL 23 indicators are included, even if they have 0 violations
+            let genderBasedViolationChartData = genderBasedViolationIndicators.map((indicator, index) => {
+                // Ensure indicator has a name
+                if (!indicator || !indicator.name) {
+                    console.warn(`Indicator at index ${index} is missing a name`);
+                }
+                
                 // Count real violations for this specific indicator from all filtered entries
                 const realCount = genderBasedViolationEntries.filter(e => 
                     e.violationCategory === 'women-hrds' && 
@@ -173,8 +275,9 @@ const ViolationDashboard: React.FC = () => {
                 if (hasFilters) {
                     // Filters applied - show real filtered data
                     return {
-                        name: indicator.name,
-                        violations: realCount
+                        name: indicator.name || `Indicator ${index + 1}`,
+                        violations: realCount,
+                        color: pastelColors[index % pastelColors.length]
                     };
                 } else {
                     // No filters - show varied dummy data representing overall strength
@@ -186,11 +289,33 @@ const ViolationDashboard: React.FC = () => {
                     const dummyValue = Math.max(1, baseValue + randomVariation);
                     
                     return {
-                        name: indicator.name,
-                        violations: Math.floor(dummyValue)
+                        name: indicator.name || `Indicator ${index + 1}`,
+                        violations: Math.floor(dummyValue),
+                        color: pastelColors[index % pastelColors.length]
                     };
                 }
             });
+            
+            // Validate that we have exactly 23 bars with names
+            if (genderBasedViolationChartData.length !== 23) {
+                console.error(`Expected 23 bars but got ${genderBasedViolationChartData.length}`);
+            }
+            
+            // Validate that all bars have names
+            const barsWithoutNames = genderBasedViolationChartData.filter(item => !item.name);
+            if (barsWithoutNames.length > 0) {
+                console.error(`Found ${barsWithoutNames.length} bars without names`);
+            }
+            
+            // Calculate total violations for percentage calculation
+            const totalViolations = genderBasedViolationChartData.reduce((sum, item) => sum + item.violations, 0);
+            
+            // Add percentage to each data point
+            genderBasedViolationChartData = genderBasedViolationChartData.map(item => ({
+                ...item,
+                percentage: totalViolations > 0 ? ((item.violations / totalViolations) * 100).toFixed(1) : '0.0'
+            }));
+            
             setGenderBasedViolationData(genderBasedViolationChartData);
 
             // Generate Province Data
@@ -240,11 +365,11 @@ const ViolationDashboard: React.FC = () => {
             }
 
             const monitoringStatuses = [
-                { value: 'confirmed-verified', label: 'Confirmed/Verified', color: '#1976D2' }, // Dark Blue
-                { value: 'resolved', label: 'Resolved', color: '#388E3C' }, // Dark Green
-                { value: 'in-progress', label: 'In Progress', color: '#FBC02D' }, // Yellow
-                { value: 'dismissed', label: 'Dismissed', color: '#D32F2F' }, // Dark Red
-                { value: 'not-confirmed', label: 'Not Confirmed', color: '#0288D1' } // Light Blue
+                { value: 'confirmed-verified', label: 'Confirmed/Verified', color: '#7FC4D9' }, // Darker Pastel Blue
+                { value: 'resolved', label: 'Resolved', color: '#A5D4A6' }, // Darker Pastel Green
+                { value: 'in-progress', label: 'In Progress', color: '#FFE082' }, // Darker Pastel Yellow
+                { value: 'dismissed', label: 'Dismissed', color: '#F19BB8' }, // Darker Pastel Pink
+                { value: 'not-confirmed', label: 'Not Confirmed', color: '#81D4FA' } // Darker Pastel Light Blue
             ];
 
             const monitoringCounts: { [key: string]: number } = {};
@@ -394,7 +519,126 @@ const ViolationDashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-xl md:text-2xl font-bold text-[#01411C]">Violation Database Dashboard</h1>
+            <div className="flex items-center justify-between">
+                <h1 className="text-xl md:text-2xl font-bold text-[#01411C]">Violation Database Dashboard</h1>
+            </div>
+
+            {/* Summary Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-[#01411C] to-[#026d2a] p-6 rounded-xl shadow-lg text-white transform transition-transform hover:scale-105">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="bg-white/20 p-3 rounded-lg">
+                            <AlertCircle className="text-white" size={24} />
+                        </div>
+                        <TrendingUp className="text-white/70" size={20} />
+                    </div>
+                    <h3 className="text-sm font-medium text-white/90 mb-1">Total Violations</h3>
+                    <p className="text-3xl font-bold">{summaryStats.totalViolations.toLocaleString()}</p>
+                    <p className="text-xs text-white/70 mt-2">All categories combined</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-[#7FC4D9] to-[#5BA8C4] p-6 rounded-xl shadow-lg text-white transform transition-transform hover:scale-105">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="bg-white/20 p-3 rounded-lg">
+                            <FileText className="text-white" size={24} />
+                        </div>
+                        <TrendingUp className="text-white/70" size={20} />
+                    </div>
+                    <h3 className="text-sm font-medium text-white/90 mb-1">Categories</h3>
+                    <p className="text-3xl font-bold">{summaryStats.byCategory}</p>
+                    <p className="text-xs text-white/70 mt-2">Active violation categories</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-[#A5D4A6] to-[#7FC482] p-6 rounded-xl shadow-lg text-white transform transition-transform hover:scale-105">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="bg-white/20 p-3 rounded-lg">
+                            <CheckCircle className="text-white" size={24} />
+                        </div>
+                        <TrendingUp className="text-white/70" size={20} />
+                    </div>
+                    <h3 className="text-sm font-medium text-white/90 mb-1">Resolved</h3>
+                    <p className="text-3xl font-bold">{summaryStats.byStatus['resolved'] || 0}</p>
+                    <p className="text-xs text-white/70 mt-2">Cases resolved</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-[#FFE082] to-[#FFC107] p-6 rounded-xl shadow-lg text-white transform transition-transform hover:scale-105">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="bg-white/20 p-3 rounded-lg">
+                            <Clock className="text-white" size={24} />
+                        </div>
+                        <TrendingUp className="text-white/70" size={20} />
+                    </div>
+                    <h3 className="text-sm font-medium text-white/90 mb-1">Recent (30 Days)</h3>
+                    <p className="text-3xl font-bold">{summaryStats.recentEntries}</p>
+                    <p className="text-xs text-white/70 mt-2">New entries this month</p>
+                </div>
+            </div>
+
+            {/* Trend Chart - Violations Over Time */}
+            <div className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-[#01411C]/10 p-2 rounded-lg">
+                            <TrendingUp className="text-[#01411C]" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl md:text-2xl font-bold text-gray-800">Violations Trend</h3>
+                            <p className="text-sm text-gray-500">Monthly violations over the last 6 months</p>
+                        </div>
+                    </div>
+                </div>
+                {trendData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <defs>
+                                <linearGradient id="colorViolations" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#01411C" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#01411C" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis 
+                                dataKey="month" 
+                                tick={{fontSize: 12, fill: '#374151'}}
+                                stroke="#9ca3af"
+                            />
+                            <YAxis 
+                                tick={{fontSize: 12, fill: '#374151'}}
+                                stroke="#9ca3af"
+                            />
+                            <Tooltip 
+                                contentStyle={{
+                                    fontSize: '14px', 
+                                    padding: '10px', 
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    backgroundColor: 'white',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}
+                            />
+                            <Area 
+                                type="monotone" 
+                                dataKey="violations" 
+                                stroke="#01411C" 
+                                strokeWidth={3}
+                                fillOpacity={1} 
+                                fill="url(#colorViolations)" 
+                                name="Violations"
+                            />
+                            <Line 
+                                type="monotone" 
+                                dataKey="violations" 
+                                stroke="#01411C" 
+                                strokeWidth={3}
+                                dot={{ fill: '#01411C', r: 5 }}
+                                activeDot={{ r: 7 }}
+                            />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="flex items-center justify-center h-[300px] text-gray-500">Loading trend data...</div>
+                )}
+            </div>
 
             {/* Global Filters */}
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border-l-4 border-[#01411C]">
@@ -512,7 +756,7 @@ const ViolationDashboard: React.FC = () => {
                                 <BarChart 
                                     data={gbvData} 
                                     layout="vertical"
-                                    margin={{ top: 20, right: 30, left: 250, bottom: 20 }}
+                                    margin={{ top: 20, right: 100, left: 250, bottom: 20 }}
                                 >
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis type="number" />
@@ -524,9 +768,13 @@ const ViolationDashboard: React.FC = () => {
                                     />
                                     <Tooltip 
                                         contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
-                                        cursor={{fill: 'rgba(255, 87, 34, 0.1)'}}
+                                        cursor={{fill: 'rgba(255, 182, 193, 0.2)'}}
                                     />
-                                    <Bar dataKey="violations" fill="#FF5722" radius={[0, 4, 4, 0]} name="Number of Violations" />
+                                    <Bar dataKey="violations" radius={[0, 4, 4, 0]} name="Number of Violations">
+                                        {gbvData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color || '#FFB3BA'} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
@@ -597,26 +845,56 @@ const ViolationDashboard: React.FC = () => {
                 >
                     {genderBasedViolationViewMode === 'graph' ? (
                         genderBasedViolationData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={450}>
-                                <BarChart data={genderBasedViolationData} margin={{ top: 20, right: 30, left: 20, bottom: 120 }}>
+                            <ResponsiveContainer width="100%" height={Math.max(450, genderBasedViolationData.length * 18 + 100)}>
+                                <BarChart 
+                                    data={genderBasedViolationData} 
+                                    layout="vertical"
+                                    margin={{ top: 20, right: 100, left: 250, bottom: 20 }}
+                                >
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis 
+                                    <XAxis type="number" />
+                                    <YAxis 
                                         dataKey="name" 
-                                        angle={-45} 
-                                        textAnchor="end" 
-                                        height={140} 
+                                        type="category" 
+                                        width={240}
                                         tick={{fontSize: 12, fill: '#374151'}}
                                         interval={0}
                                     />
-                                    <YAxis 
-                                        label={{ value: 'Number of Violations', angle: -90, position: 'insideLeft', style: {fontSize: 14, fill: '#374151'} }}
-                                        tick={{fontSize: 14, fill: '#374151'}}
-                                    />
                                     <Tooltip 
                                         contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
-                                        cursor={{fill: 'rgba(156, 39, 176, 0.1)'}}
+                                        cursor={{fill: 'rgba(221, 160, 221, 0.1)'}}
+                                        formatter={(value: number, payload: any) => {
+                                            const percentage = payload && payload.payload ? payload.payload.percentage : (payload?.percentage || '0.0');
+                                            return [`${value} (${percentage}%)`, 'Violations'];
+                                        }}
                                     />
-                                    <Bar dataKey="violations" fill="#9C27B0" radius={[4, 4, 0, 0]} name="Number of Violations" />
+                                    <Bar 
+                                        dataKey="violations" 
+                                        radius={[0, 4, 4, 0]} 
+                                        name="Number of Violations"
+                                        label={(props: any) => {
+                                            const { x, y, width, height, payload } = props;
+                                            if (!payload || width < 30) return null; // Don't show label if bar is too small or payload is missing
+                                            const percentage = payload.percentage || '0.0';
+                                            return (
+                                                <text
+                                                    x={x + width + 5}
+                                                    y={y + height / 2}
+                                                    fill="#374151"
+                                                    fontSize={12}
+                                                    fontWeight={500}
+                                                    textAnchor="start"
+                                                    dominantBaseline="middle"
+                                                >
+                                                    {percentage}%
+                                                </text>
+                                            );
+                                        }}
+                                    >
+                                        {genderBasedViolationData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color || '#DDA0DD'} />
+                                        ))}
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
@@ -679,9 +957,9 @@ const ViolationDashboard: React.FC = () => {
                                     />
                                     <Tooltip 
                                         contentStyle={{fontSize: '14px', padding: '10px', borderRadius: '8px'}}
-                                        cursor={{fill: 'rgba(1, 65, 28, 0.1)'}}
+                                        cursor={{fill: 'rgba(176, 224, 230, 0.2)'}}
                                     />
-                                    <Bar dataKey="violations" fill="#01411C" radius={[4, 4, 0, 0]} name="Number of Violations" />
+                                    <Bar dataKey="violations" fill="#B0E0E6" radius={[4, 4, 0, 0]} name="Number of Violations" />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
@@ -773,11 +1051,11 @@ const ViolationDashboard: React.FC = () => {
                                                 label={({name, percent}) => `${(percent * 100).toFixed(1)}%`}
                                                 outerRadius={140}
                                                 innerRadius={50}
-                                                fill="#8884d8"
+                                                fill="#DDA0DD"
                                                 dataKey="value"
                                             >
                                                 {monitoringData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
+                                                    <Cell key={`cell-${index}`} fill={entry.color || '#DDA0DD'} />
                                                 ))}
                                             </Pie>
                                             <Tooltip 
